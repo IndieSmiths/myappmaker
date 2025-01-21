@@ -1,0 +1,50 @@
+[project]
+name = "myappmaker"
+dynamic = ["version"]
+dependencies = ["pyside6"]
+authors = [
+  { name="Kennedy Richard", email="kennedy@kennedyrichard.com" },
+]
+description = "A small example package"
+keywords = ["desktop", "app making", "app building", "gui", "pyside", "qt"]
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Operating System :: OS Independent",
+
+    "License :: OSI Approved :: The Unlicense (Unlicense)",
+
+    "Topic :: Software Development",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Desktop Environment",
+    "Topic :: Multimedia",
+
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Other Audience",
+
+]
+license = "UNLICENSE"
+license-files = ["UNLICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://indiepython.com/myappmaker"
+"Source Code" = "https://github.com/IndiePython/myappmaker"
+Forum = https://github.com/IndiePython/myappmaker/discussions
+"Bug Tracker" = https://github.com/IndiePython/nodezator/issues
+Funding = https://indiepython.com/donate
+
+
+[project.gui-scripts]
+myappmaker = myappmaker.__main__:parse_args_and_execute_main
+
+[build-system]
+requires = ["setuptools>=59.6"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "myappmaker.__version__"}
