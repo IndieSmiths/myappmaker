@@ -4,7 +4,7 @@
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem
 
-from PySide6.QtGui import QBrush, QPen, QPixmap, QPainter
+from PySide6.QtGui import QBrush, QPen, QPainter, QPainterPath
 
 from PySide6.QtCore import Qt
 
@@ -36,17 +36,13 @@ class CanvasScene(QGraphicsScene):
 
         self.addItem(rect)
 
-        ### transparent drawing board (pixmap)
+        ### 
 
-        board = self.board = QPixmap(*SIZE)
-        board.fill(Qt.transparent)
-
-        self.board_proxy = self.addPixmap(board)
-
-        ## its pen
-
-        pen = self.board_pen = QPen(Qt.red)
+        pen = QPen(Qt.red)
         pen.setWidth(3)
+
+        path = self.path = QPainterPath()
+        self.path_proxy = self.addPath(path, pen)
 
         ###
         self.last_point = None
@@ -68,6 +64,7 @@ class CanvasScene(QGraphicsScene):
 
         if last_point is None:
 
+            self.path.moveTo(point.x(), point.y())
             self.last_point = point
             return
 
@@ -79,16 +76,11 @@ class CanvasScene(QGraphicsScene):
         ### otherwise, draw a line on our board and update its
         ### QGraphics proxy
 
-        painter = QPainter(self.board)
-
-        painter.setPen(self.board_pen)
-        painter.drawLine(self.last_point, point)
-
-        painter.end()
+        self.path.lineTo(point.x(), point.y())
+        self.path_proxy.setPath(self.path)
 
         self.last_point = point
 
-        self.board_proxy.setPixmap(self.board)
 
     def mouseReleaseEvent(self, event):
         self.last_point = None
