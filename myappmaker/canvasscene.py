@@ -1,17 +1,25 @@
 """Facility with canvas to add and organize widgets."""
 
+### standard library import
+from collections import deque
+
+
 ### third-party imports
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem
 
 from PySide6.QtGui import QBrush, QPen, QPainter, QPainterPath
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 
 
 
-### constant
+### constants/module level objs
+
 SIZE = (1280, 720)
+
+STROKES = deque()
+STROKE_PATH_PROXIES = []
 
 
 
@@ -22,6 +30,11 @@ class CanvasScene(QGraphicsScene):
     def __init__(self):
 
         super().__init__(0, 0, *SIZE)
+
+        ### strokes timer
+
+        stimer = self.strokes_timer = QTimer()
+        stimer.timeout.connect(self.process_strokes)
 
         ### rect
 
@@ -38,11 +51,8 @@ class CanvasScene(QGraphicsScene):
 
         ### 
 
-        pen = QPen(Qt.red)
-        pen.setWidth(3)
-
-        path = self.path = QPainterPath()
-        self.path_proxy = self.addPath(path, pen)
+        self.strokes_pen = QPen(Qt.red)
+        self.strokes_pen.setWidth(3)
 
         ###
         self.last_point = None
@@ -59,13 +69,34 @@ class CanvasScene(QGraphicsScene):
         point = event.scenePos()
         last_point = self.last_point
 
-        ### if there's no last point, store current point as last
-        ### one and leave right away
+        ### get tuple of coordinates from current point
+        coords = point.x(), point.y()
+
+        ### if there's no last point, it means the user just began drawing a
+        ### stroke
 
         if last_point is None:
 
-            self.path.moveTo(point.x(), point.y())
+            ### stop counter
+            self.strokes_timer.stop()
+
+            ### create a path and its QGraphics proxy to represent the stroke
+
+            path = self.path = QPainterPath()
+            self.path_proxy = self.addPath(path, self.strokes_pen)
+
+            ### move path to current point and store such point as last one
+
+            path.moveTo(*coords)
             self.last_point = point
+
+            ### store coordinates in new list within STROKES
+            STROKES.append([coords])
+
+            ### store path proxy
+            STROKE_PATH_PROXIES.append(self.path_proxy)
+
+            ### then leave
             return
 
         ### if the points are too close, leave as well
@@ -79,8 +110,29 @@ class CanvasScene(QGraphicsScene):
         self.path.lineTo(point.x(), point.y())
         self.path_proxy.setPath(self.path)
 
+        ### store coordinates
+        STROKES[-1].append(coords)
+
+        ### reference current point as last one
         self.last_point = point
 
 
     def mouseReleaseEvent(self, event):
+
         self.last_point = None
+        self.strokes_timer.start(500)
+
+    def process_strokes(self):
+
+        ### remove path proxies
+
+        self.strokes_timer.stop()
+
+        for item in STROKE_PATH_PROXIES:
+            self.removeItem(item)
+
+        STROKE_PATH_PROXIES.clear()
+
+        del self.path, self.path_proxy
+
+        ### check list of strokes for matches
