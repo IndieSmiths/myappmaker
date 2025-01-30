@@ -8,28 +8,23 @@ and technical users, including block coding and many more.
 import sys
 
 
-### third-party imports
-from PySide6.QtWidgets import QApplication, QMainWindow, QGraphicsView
+### third-party import
+from PySide6.QtWidgets import QApplication
 
 
-### local import
-from .canvasscene import CanvasScene
+### local imports
 
+from .appinfo import ORG_DIR_NAME, APP_DIR_NAME
 
+from .mainwindow import MainWindow
 
-class MainWindow(QMainWindow):
-
-    def __init__(self):
-
-        super().__init__()
-
-        self.setWindowTitle('MyAppMaker')
-        scene = self.scene = CanvasScene()
-        view = self.view = QGraphicsView(scene)
-        self.setCentralWidget(view)
 
 
 app = QApplication(sys.argv)
+app.setOrganizationName(ORG_DIR_NAME)
+app.setApplicationName(APP_DIR_NAME)
+
 window = MainWindow()
 window.show()
+
 app.exec()
