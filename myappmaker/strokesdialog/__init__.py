@@ -1,21 +1,26 @@
 
+
 ### third-party imports
 
 from PySide6.QtWidgets import (
     QDialog,
     QGridLayout,
+    QHBoxLayout,
     QWidget,
     QLabel,
     QCheckBox,
 )
 
-from PySide6.QtGui import QPixmap
+from PySide6.QtSvgWidgets import QSvgWidget
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QByteArray
 
 
 ### local import
-from .config import STROKES_DATA_DIR
+
+from ..config import STROKES_DATA_DIR
+
+from .getnotfoundsvg import get_not_found_icon_svg_text
 
 
 
@@ -46,10 +51,10 @@ class StrokeSettingsDialog(QDialog):
             STROKES_DATA_DIR / 'unmarked_checkbutton_strokes_dir'
         )
 
-        cbox = QCheckBox()
-        cbox.setCheckState(Qt.CheckState.Unchecked)
+        unchecked_checkbox = QCheckBox()
+        unchecked_checkbox.setCheckState(Qt.CheckState.Unchecked)
 
-        grid.addWidget(cbox, 1, 0)
+        grid.addWidget(unchecked_checkbox, 1, 0)
         grid.addWidget(StrokesDisplay(unmarked_checkbutton_strokes_dir), 1, 1)
 
         ### marked checkbutton
@@ -58,10 +63,10 @@ class StrokeSettingsDialog(QDialog):
             STROKES_DATA_DIR / 'marked_checkbutton_strokes_dir'
         )
 
-        cbox = QCheckBox()
-        cbox.setCheckState(Qt.CheckState.Checked)
+        checked_checkbox = QCheckBox()
+        checked_checkbox.setCheckState(Qt.CheckState.Checked)
 
-        grid.addWidget(cbox, 2, 0)
+        grid.addWidget(checked_checkbox, 2, 0)
         grid.addWidget(StrokesDisplay(marked_checkbutton_strokes_dir), 2, 1)
 
         ###
@@ -70,6 +75,7 @@ class StrokeSettingsDialog(QDialog):
 
 ### strokes display widget definition
 
+
 class StrokesDisplay(QWidget):
 
     def __init__(self, strokes_dir):
@@ -77,7 +83,6 @@ class StrokesDisplay(QWidget):
         super().__init__()
 
         self.strokes_dir = strokes_dir
-
 
         if strokes_dir.exists():
 
@@ -94,9 +99,23 @@ class StrokesDisplay(QWidget):
 
     def init_empty_display(self):
 
-        self.label = QLabel(self)
-        pmap = QPixmap(STROKE_SIZE)
-        self.label.setPixmap(pmap)
+        layout = QHBoxLayout()
+        svg_widget = QSvgWidget()
+
+        svg_widget.load(
+
+            QByteArray(
+
+                get_not_found_icon_svg_text(
+                    STROKE_SIZE.toTuple()
+                )
+
+            )
+
+        )
+
+        layout.addWidget(svg_widget)
+        self.setLayout(layout)
 
     def init_strokes_display(self, stroke_array_paths):
         n = len(stroke_array_paths)
