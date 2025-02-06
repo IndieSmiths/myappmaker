@@ -23,6 +23,8 @@ from PySide6.QtCore import Qt, QSize, QByteArray
 
 from ..config import STROKES_DATA_DIR
 
+from .strokesrecordingdialog import StrokesRecordingDialog
+
 from .getnotfoundsvg import get_not_found_icon_svg_text
 
 
@@ -58,6 +60,8 @@ class StrokeSettingsDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle('Stroke settings')
+
+        self.recording_dlg = StrokesRecordingDialog(self)
 
         grid = self.grid = QGridLayout()
 
@@ -102,7 +106,7 @@ class StrokeSettingsDialog(QDialog):
         self.setLayout(self.grid)
 
     def reset_stroke(self, widget_key):
-        print(widget_key)
+        self.recording_dlg.exec()
 
 
 ### strokes display widget definition
