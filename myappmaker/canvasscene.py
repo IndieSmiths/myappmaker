@@ -8,7 +8,7 @@ from collections import deque
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem
 
-from PySide6.QtGui import QBrush, QPen, QPainter, QPainterPath
+from PySide6.QtGui import QBrush, QPen, QPainterPath
 
 from PySide6.QtCore import Qt, QTimer
 
