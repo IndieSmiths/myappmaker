@@ -1,10 +1,15 @@
 """Facility with canvas to record strokes."""
 
-### standard library import
+### standard library imports
+
 from collections import deque
+
+from operator import getitem
 
 
 ### third-party imports
+
+## PySide6
 
 from PySide6.QtWidgets import (
 
@@ -19,6 +24,10 @@ from PySide6.QtGui import QPen, QPainterPath
 
 from PySide6.QtCore import Qt, QTimer, QLine
 
+## numpy
+
+from numpy import array as numpy_array
+
 
 
 ### constants/module level objs
@@ -29,6 +38,9 @@ SIZE = (DIMENSION, DIMENSION)
 
 STROKES = deque()
 STROKE_PATH_PROXIES = []
+
+get_first_item = getitem(0)
+get_second_item = getitem(1)
 
 
 
@@ -142,7 +154,20 @@ class StrokesRecordingScene(QGraphicsScene):
 
         del self.path, self.path_proxy
 
-        ### check list of strokes for matches
+        stroke_arrays = []
+
+        while STROKES:
+
+            points = STROKES.popleft()
+
+            offset_points_array = numpy_array([
+                (a - HALF_DIMENSION, b - HALF_DIMENSION)
+                for a, b in points
+            ])
+
+            stroke_arrays.append(offset_points_array)
+
+        self.stroke_display.update_and_save_strokes(stroke_arrays)
 
 
 class StrokesRecordingDialog(QDialog):
@@ -167,3 +192,8 @@ class StrokesRecordingDialog(QDialog):
         vlayout.addWidget(self.view)
 
         self.setLayout(vlayout)
+
+    def prepare_session(self, stroke_display):
+
+        self.label.setText(stroke_display.widget_key)
+        self.stroke_display = stroke_display

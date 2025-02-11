@@ -4,6 +4,8 @@ from functools import partial
 
 ### third-party imports
 
+## PySide6
+
 from PySide6.QtWidgets import (
     QDialog,
     QGridLayout,
@@ -17,6 +19,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from PySide6.QtCore import Qt, QSize, QByteArray
+
+## numpy
+
+from numpy import save as save_array
 
 
 ### local import
@@ -63,16 +69,23 @@ class StrokeSettingsDialog(QDialog):
 
         self.recording_dlg = StrokesRecordingDialog(self)
 
+        ###
+        self.stroke_display_map = {}
+
+        ###
+
         grid = self.grid = QGridLayout()
 
         ### define captions
 
         for col, label_text in enumerate(
+
             (
                 "Widget name",
                 "Strokes",
                 "Set/reset",
             )
+
         ):
 
             label = QLabel(label_text)
@@ -94,18 +107,28 @@ class StrokeSettingsDialog(QDialog):
         ):
 
             button = QPushButton("Set/reset strokes")
+
             button.clicked.connect(
                 partial(self.reset_stroke, widget_key)
             )
 
             grid.addWidget(get_widget(), row, 0)
-            grid.addWidget(StrokesDisplay(widget_key), row, 1)
+
+            stroke_display = StrokesDisplay(widget_key)
+            self.stroke_display_map[widget_key] = stroke_display
+            grid.addWidget(stroke_display, row, 1)
+
             grid.addWidget(button, row, 2)
 
         ###
         self.setLayout(self.grid)
 
     def reset_stroke(self, widget_key):
+
+        self.recording_dlg.prepare_session(
+            self.stroke_display_map[widget_key]
+        )
+
         self.recording_dlg.exec()
 
 
@@ -127,6 +150,8 @@ class StrokesDisplay(QWidget):
     def __init__(self, widget_key):
 
         super().__init__()
+
+        self.widget_key = widget_key
 
         self.strokes_dir = strokes_dir = (
             STROKES_DATA_DIR / f'{widget_key}_strokes_dir'
@@ -161,4 +186,12 @@ class StrokesDisplay(QWidget):
         self.setLayout(layout)
 
     def init_strokes_display(self, stroke_array_paths):
-        n = len(stroke_array_paths)
+
+    def store_and_save_strokes(self, stroke_arrays):
+
+        strokes_dir = self.strokes_dir
+
+        for index, stroke_array in enumerate(stroke_arrays):
+
+            array_path = strokes_dir / f'stroke_{index:>02}.npy'
+            save_array(array_path, stroke_array)

@@ -132,6 +132,7 @@ class CanvasScene(QGraphicsScene):
             self.removeItem(item)
 
         STROKE_PATH_PROXIES.clear()
+        STROKES.clear()
 
         del self.path, self.path_proxy
 
