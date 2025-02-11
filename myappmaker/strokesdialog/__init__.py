@@ -1,6 +1,10 @@
 
-### standard library import
+### standard library imports
+
 from functools import partial
+
+from shutil import rmtree
+
 
 ### third-party imports
 
@@ -18,25 +22,28 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from PySide6.QtCore import Qt, QSize, QByteArray
+from PySide6.QtCore import Qt, QByteArray, QPointF
+
+from PySide6.QtGui import QPainter, QPixmap, QPen
 
 ## numpy
+from numpy import array as numpy_array
 
-from numpy import save as save_array
 
-
-### local import
+### local imports
 
 from ..config import STROKES_DATA_DIR
+
+from ..ourstdlibs.pyl import load_pyl, save_pyl
 
 from .strokesrecordingdialog import StrokesRecordingDialog
 
 from .getnotfoundsvg import get_not_found_icon_svg_text
 
+from .constants import STROKE_SIZE, STROKE_DIMENSION, STROKE_HALF_DIMENSION
 
 
-### constant
-STROKE_SIZE = QSize(300, 300)
+
 
 ### unmarked checkbox
 
@@ -55,6 +62,13 @@ def get_check_box(checked=True):
 
 get_checked_check_box = partial(get_check_box, True)
 get_unchecked_check_box = partial(get_check_box, False)
+
+### stroke manager
+
+class StrokesManager:
+
+    def __init__(self):
+        ...
 
 
 ### dialog definition
@@ -137,19 +151,22 @@ class StrokeSettingsDialog(QDialog):
 NOT_FOUND_SVG_BYTE_ARRAY = (
 
     QByteArray(
-        get_not_found_icon_svg_text(
-            STROKE_SIZE.toTuple()
-        )
+        get_not_found_icon_svg_text(STROKE_SIZE)
     )
 
 )
 
+STROKE_PEN = QPen()
+STROKE_PEN.setWidth(2)
+STROKE_PEN.setColor(Qt.red)
 
 class StrokesDisplay(QWidget):
 
     def __init__(self, widget_key):
 
         super().__init__()
+
+        self.label = QLabel()
 
         self.widget_key = widget_key
 
@@ -159,15 +176,15 @@ class StrokesDisplay(QWidget):
 
         if strokes_dir.exists():
 
-            npys = (
+            pyls = (
                 sorted(
                     str(path)
-                    for path in strokes_dir.glob('*.npy')
+                    for path in strokes_dir.glob('*.pyl')
                 )
             )
 
-            if npys:
-                self.init_strokes_display(npys)
+            if pyls:
+                self.init_strokes_display(pyls)
 
             else:
                 self.init_empty_display()
@@ -181,17 +198,76 @@ class StrokesDisplay(QWidget):
         svg_widget = QSvgWidget()
 
         svg_widget.load((NOT_FOUND_SVG_BYTE_ARRAY))
+        svg_widget.renderer().setAspectRatioMode(Qt.KeepAspectRatio)
 
         layout.addWidget(svg_widget)
         self.setLayout(layout)
 
-    def init_strokes_display(self, stroke_array_paths):
+    def init_strokes_display(self, stroke_paths):
 
-    def store_and_save_strokes(self, stroke_arrays):
+        strokes = list(map(load_pyl, stroke_paths))
+        self.stroke_arrays = list(map(numpy_array, strokes))
+
+        self.label.setPixmap(self.get_new_pixmap(strokes))
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+
+    def update_and_save_strokes(self, strokes):
 
         strokes_dir = self.strokes_dir
 
-        for index, stroke_array in enumerate(stroke_arrays):
+        if strokes_dir.exists():
+            rmtree(str(strokes_dir))
 
-            array_path = strokes_dir / f'stroke_{index:>02}.npy'
-            save_array(array_path, stroke_array)
+        strokes_dir.mkdir()
+
+        for index, points in enumerate(strokes):
+
+            save_pyl(
+                points,
+                (strokes_dir / f'stroke_{index:>02}.pyl'),
+            )
+
+        self.stroke_arrays = list(map(numpy_array, strokes))
+
+        self.label.setPixmap(self.get_new_pixmap(strokes))
+
+    def get_new_pixmap(self, strokes):
+
+        n = len(strokes)
+        width = n * STROKE_DIMENSION
+        height = STROKE_DIMENSION
+
+        pixmap = QPixmap(width, height)
+        pixmap.fill(Qt.white)
+
+        painter = QPainter(pixmap)
+        painter.setPen(STROKE_PEN)
+
+        x_increment = -STROKE_HALF_DIMENSION
+        y_increment = 150
+
+        for points in strokes:
+
+            x_increment += STROKE_DIMENSION
+
+            painter.drawPolyline(
+
+                [
+
+                    QPointF(
+                        a+x_increment,
+                        b+y_increment,
+                    )
+
+                    for a, b in points
+
+                ]
+
+            )
+
+        painter.end()
+
+        return pixmap

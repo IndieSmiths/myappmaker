@@ -4,7 +4,7 @@
 
 from collections import deque
 
-from operator import getitem
+from operator import itemgetter
 
 
 ### third-party imports
@@ -29,18 +29,18 @@ from PySide6.QtCore import Qt, QTimer, QLine
 from numpy import array as numpy_array
 
 
+### local imports
+from .constants import STROKE_DIMENSION, STROKE_SIZE, STROKE_HALF_DIMENSION
 
-### constants/module level objs
 
-DIMENSION = 300
-HALF_DIMENSION = DIMENSION / 2
-SIZE = (DIMENSION, DIMENSION)
+
+### module level objs
 
 STROKES = deque()
 STROKE_PATH_PROXIES = []
 
-get_first_item = getitem(0)
-get_second_item = getitem(1)
+get_first_item = itemgetter(0)
+get_second_item = itemgetter(1)
 
 
 
@@ -48,9 +48,11 @@ get_second_item = getitem(1)
 
 class StrokesRecordingScene(QGraphicsScene):
 
-    def __init__(self):
+    def __init__(self, recording_dlg):
 
-        super().__init__(0, 0, *SIZE)
+        super().__init__(0, 0, *STROKE_SIZE)
+
+        self.recording_dlg = recording_dlg
 
         ### strokes timer
 
@@ -62,10 +64,30 @@ class StrokesRecordingScene(QGraphicsScene):
         black_pen = QPen(Qt.black)
         black_pen.setWidth(1)
 
-        hline = QLine(0, HALF_DIMENSION, DIMENSION, HALF_DIMENSION)
+        hline = (
+
+            QLine(
+                0,
+                STROKE_HALF_DIMENSION,
+                STROKE_DIMENSION,
+                STROKE_HALF_DIMENSION,
+            )
+
+        )
+
         self.hline_proxy = self.addLine(hline, black_pen)
 
-        vline = QLine(HALF_DIMENSION, 0, HALF_DIMENSION, DIMENSION)
+        vline = (
+
+            QLine(
+                STROKE_HALF_DIMENSION,
+                0,
+                STROKE_HALF_DIMENSION,
+                STROKE_DIMENSION,
+            )
+
+        )
+
         self.vline_proxy = self.addLine(vline, black_pen)
 
         ###
@@ -154,20 +176,20 @@ class StrokesRecordingScene(QGraphicsScene):
 
         del self.path, self.path_proxy
 
-        stroke_arrays = []
+        offset_strokes = []
 
         while STROKES:
 
             points = STROKES.popleft()
 
-            offset_points_array = numpy_array([
-                (a - HALF_DIMENSION, b - HALF_DIMENSION)
+            offset_points = [
+                (a - STROKE_HALF_DIMENSION, b - STROKE_HALF_DIMENSION)
                 for a, b in points
-            ])
+            ]
 
-            stroke_arrays.append(offset_points_array)
+            offset_strokes.append(offset_points)
 
-        self.stroke_display.update_and_save_strokes(stroke_arrays)
+        self.recording_dlg.stroke_display.update_and_save_strokes(offset_strokes)
 
 
 class StrokesRecordingDialog(QDialog):
@@ -187,7 +209,7 @@ class StrokesRecordingDialog(QDialog):
 
         ### recording scene and its view
 
-        scene = self.scene = StrokesRecordingScene()
+        scene = self.scene = StrokesRecordingScene(recording_dlg=self)
         view = self.view = QGraphicsView(scene)
         vlayout.addWidget(self.view)
 
