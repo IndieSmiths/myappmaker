@@ -21,7 +21,7 @@ from .appinfo import APP_TITLE, ORG_DIR_NAME, APP_DIR_NAME
 
 from .canvasscene import CanvasScene
 
-from .strokesdialog import StrokeSettingsDialog
+from .strokesmgr import StrokeSettingsDialog
 
 
 
