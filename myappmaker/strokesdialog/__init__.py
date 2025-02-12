@@ -5,6 +5,10 @@ from functools import partial
 
 from shutil import rmtree
 
+from collections import deque
+
+from itertools import repeat
+
 
 ### third-party imports
 
@@ -24,7 +28,7 @@ from PySide6.QtSvgWidgets import QSvgWidget
 
 from PySide6.QtCore import Qt, QByteArray, QPointF
 
-from PySide6.QtGui import QPainter, QPixmap, QPen
+from PySide6.QtGui import QPainter, QPixmap, QPen, QBrush
 
 ## numpy
 from numpy import array as numpy_array
@@ -40,7 +44,12 @@ from .strokesrecordingdialog import StrokesRecordingDialog
 
 from .getnotfoundsvg import get_not_found_icon_svg_text
 
-from .constants import STROKE_SIZE, STROKE_DIMENSION, STROKE_HALF_DIMENSION
+from .constants import (
+    STROKE_SIZE,
+    STROKE_DIMENSION,
+    STROKE_HALF_DIMENSION,
+    LIGHT_GREY_QCOLOR,
+)
 
 
 
@@ -62,13 +71,6 @@ def get_check_box(checked=True):
 
 get_checked_check_box = partial(get_check_box, True)
 get_unchecked_check_box = partial(get_check_box, False)
-
-### stroke manager
-
-class StrokesManager:
-
-    def __init__(self):
-        ...
 
 
 ### dialog definition
@@ -156,15 +158,62 @@ NOT_FOUND_SVG_BYTE_ARRAY = (
 
 )
 
-STROKE_PEN = QPen()
-STROKE_PEN.setWidth(2)
-STROKE_PEN.setColor(Qt.red)
+TOP_STROKE_PEN = QPen()
+TOP_STROKE_PEN.setWidth(4)
+TOP_STROKE_PEN.setColor(Qt.black)
+
+BOTTOM_STROKE_PEN = QPen()
+BOTTOM_STROKE_PEN.setWidth(4)
+BOTTOM_STROKE_PEN.setColor(LIGHT_GREY_QCOLOR)
+
+START_POINT_BRUSH = QBrush()
+START_POINT_BRUSH.setColor(Qt.red)
+START_POINT_BRUSH.setStyle(Qt.SolidPattern)
+
+
+def _get_stroke_bg():
+
+    bg = QPixmap(*STROKE_SIZE)
+    bg.fill(Qt.white)
+    painter = QPainter(bg)
+
+    pen = QPen()
+    pen.setWidth(2)
+    pen.setColor(LIGHT_GREY_QCOLOR)
+    pen.setStyle(Qt.DashLine)
+
+    painter.setPen(pen)
+
+    width = height = STROKE_DIMENSION
+    half_width = half_height = STROKE_HALF_DIMENSION
+
+    hline = 0, half_height, width, half_height
+    vline = half_width, 0, half_width, height
+
+    painter.drawLine(*hline)
+    painter.drawLine(*vline)
+
+    pen.setStyle(Qt.SolidLine)
+    painter.setPen(pen)
+    painter.drawLine(width-1, 0, width-1, height)
+    painter.end()
+
+    return bg
+
 
 class StrokesDisplay(QWidget):
+
+    stroke_bg = None
 
     def __init__(self, widget_key):
 
         super().__init__()
+
+        ###
+        if self.__class__.stroke_bg is None:
+            self.__class__.stroke_bg = _get_stroke_bg()
+
+        ###
 
         self.label = QLabel()
 
@@ -192,14 +241,15 @@ class StrokesDisplay(QWidget):
         else:
             self.init_empty_display()
 
+
     def init_empty_display(self):
 
-        layout = QHBoxLayout()
         svg_widget = QSvgWidget()
 
         svg_widget.load((NOT_FOUND_SVG_BYTE_ARRAY))
         svg_widget.renderer().setAspectRatioMode(Qt.KeepAspectRatio)
 
+        layout = QHBoxLayout()
         layout.addWidget(svg_widget)
         self.setLayout(layout)
 
@@ -241,21 +291,34 @@ class StrokesDisplay(QWidget):
         height = STROKE_DIMENSION
 
         pixmap = QPixmap(width, height)
-        pixmap.fill(Qt.white)
 
         painter = QPainter(pixmap)
-        painter.setPen(STROKE_PEN)
+        painter.drawTiledPixmap(0, 0, width, height, self.stroke_bg)
 
         x_increment = -STROKE_HALF_DIMENSION
         y_increment = 150
 
-        for points in strokes:
+        strokes_deque = deque(strokes)
+        bottom_strokes = []
+
+        while strokes_deque:
+
+            top_stroke = strokes_deque.popleft()
 
             x_increment += STROKE_DIMENSION
 
-            painter.drawPolyline(
+            for points, pen, point_on_start in (
 
-                [
+                *zip(
+                    bottom_strokes,
+                    repeat(BOTTOM_STROKE_PEN),
+                    repeat(False),
+                ),
+                (top_stroke, TOP_STROKE_PEN, True),
+
+            ):
+
+                offset_points = [
 
                     QPointF(
                         a+x_increment,
@@ -266,7 +329,27 @@ class StrokesDisplay(QWidget):
 
                 ]
 
-            )
+                painter.setPen(pen)
+                painter.drawPolyline(offset_points)
+
+                if point_on_start:
+
+                    ###
+
+                    painter.setPen(Qt.NoPen)
+                    painter.setBrush(START_POINT_BRUSH)
+                    painter.setOpacity(.6)
+
+                    ###
+                    painter.drawEllipse(QPointF(offset_points[0]), 8, 8)
+
+                    ###
+
+                    painter.setPen(Qt.SolidLine)
+                    painter.setBrush(Qt.NoBrush)
+                    painter.setOpacity(1.0)
+
+            bottom_strokes.append(top_stroke)
 
         painter.end()
 

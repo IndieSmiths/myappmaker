@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsView,
     QDialog,
+    QLayout,
     QVBoxLayout,
     QLabel,
 )
@@ -24,13 +25,14 @@ from PySide6.QtGui import QPen, QPainterPath
 
 from PySide6.QtCore import Qt, QTimer, QLine
 
-## numpy
-
-from numpy import array as numpy_array
-
 
 ### local imports
-from .constants import STROKE_DIMENSION, STROKE_SIZE, STROKE_HALF_DIMENSION
+from .constants import (
+    STROKE_DIMENSION,
+    STROKE_SIZE,
+    STROKE_HALF_DIMENSION,
+    LIGHT_GREY_QCOLOR,
+)
 
 
 
@@ -61,8 +63,14 @@ class StrokesRecordingScene(QGraphicsScene):
 
         ###
 
-        black_pen = QPen(Qt.black)
-        black_pen.setWidth(1)
+        self.setBackgroundBrush(Qt.white)
+
+        ###
+
+        dash_pen = QPen()
+        dash_pen.setWidth(2)
+        dash_pen.setStyle(Qt.DashLine)
+        dash_pen.setColor(LIGHT_GREY_QCOLOR)
 
         hline = (
 
@@ -75,7 +83,7 @@ class StrokesRecordingScene(QGraphicsScene):
 
         )
 
-        self.hline_proxy = self.addLine(hline, black_pen)
+        self.hline_proxy = self.addLine(hline, dash_pen)
 
         vline = (
 
@@ -88,7 +96,7 @@ class StrokesRecordingScene(QGraphicsScene):
 
         )
 
-        self.vline_proxy = self.addLine(vline, black_pen)
+        self.vline_proxy = self.addLine(vline, dash_pen)
 
         ###
 
@@ -161,7 +169,7 @@ class StrokesRecordingScene(QGraphicsScene):
     def mouseReleaseEvent(self, event):
 
         self.last_point = None
-        self.strokes_timer.start(500)
+        self.strokes_timer.start(700)
 
     def process_strokes(self):
 
@@ -213,6 +221,9 @@ class StrokesRecordingDialog(QDialog):
         view = self.view = QGraphicsView(scene)
         vlayout.addWidget(self.view)
 
+        ###
+
+        vlayout.setSizeConstraint(QLayout.SetFixedSize)
         self.setLayout(vlayout)
 
     def prepare_session(self, stroke_display):
