@@ -40,8 +40,10 @@ def get_not_found_icon_svg_text(size):
 
     cx, cy = (dimension/2 for dimension in size)
 
-    rx = cx - (outline_thickness/2)
-    ry = cy - (outline_thickness/2)
+    width, height = size
+
+    rx = (width - (outline_thickness*2)) / 2
+    ry = (height - (outline_thickness*2)) / 2
 
     ## render
 
@@ -67,7 +69,7 @@ def get_not_found_icon_svg_text(size):
 
     if outline_thickness > 1:
 
-        deflation = -(outline_thickness - 1) / 2
+        deflation = -(outline_thickness + 6)
 
         rect.translate(-deflation, -deflation)
 

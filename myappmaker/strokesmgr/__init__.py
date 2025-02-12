@@ -5,9 +5,11 @@ from functools import partial
 
 from shutil import rmtree
 
-from collections import deque
+from collections import defaultdict, deque
 
 from itertools import repeat
+
+from contextlib import suppress
 
 
 ### third-party imports
@@ -24,7 +26,7 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 
-from PySide6.QtSvgWidgets import QSvgWidget
+from PySide6.QtSvg import QSvgRenderer
 
 from PySide6.QtCore import Qt, QByteArray, QPointF
 
@@ -53,6 +55,10 @@ from .constants import (
 
 
 
+### strokes map
+
+STROKES_MAP = defaultdict(dict)
+
 
 ### unmarked checkbox
 
@@ -71,6 +77,40 @@ def get_check_box(checked=True):
 
 get_checked_check_box = partial(get_check_box, True)
 get_unchecked_check_box = partial(get_check_box, False)
+
+
+
+def get_strokes_orientations(strokes):
+
+    orientations = []
+
+    for points in strokes:
+
+        xs, ys = zip(*points)
+
+        left = min(xs)
+        right = max(xs)
+
+        width = right - left
+
+        top = min(ys)
+        bottom = max(ys)
+
+        height = bottom - top
+
+        if width * .7 > height:
+            orientation = 'landscape'
+
+        elif height * .7 > width:
+            orientation = 'portrait'
+
+        else:
+            orientation = 'square'
+
+        orientations.append(orientation)
+
+    return tuple(orientations)
+
 
 
 ### dialog definition
@@ -97,7 +137,7 @@ class StrokeSettingsDialog(QDialog):
         for col, label_text in enumerate(
 
             (
-                "Widget name",
+                "Widget",
                 "Strokes",
                 "Set/reset",
             )
@@ -244,19 +284,28 @@ class StrokesDisplay(QWidget):
 
     def init_empty_display(self):
 
-        svg_widget = QSvgWidget()
+        # TODO perhaps this renderer can be created only once
+        # and reused (if possible, as a top level object)
+        renderer = QSvgRenderer(NOT_FOUND_SVG_BYTE_ARRAY)
 
-        svg_widget.load((NOT_FOUND_SVG_BYTE_ARRAY))
-        svg_widget.renderer().setAspectRatioMode(Qt.KeepAspectRatio)
+        pixmap = QPixmap(100, 100)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        renderer.render(painter)#, pixmap.rect())
+        painter.end()
+        self.label.setPixmap(pixmap)
+
+        #svg_widget.renderer().setAspectRatioMode(Qt.KeepAspectRatio)
 
         layout = QHBoxLayout()
-        layout.addWidget(svg_widget)
+        #layout.addWidget(svg_widget)
+        layout.addWidget(self.label)
         self.setLayout(layout)
 
     def init_strokes_display(self, stroke_paths):
 
         strokes = list(map(load_pyl, stroke_paths))
-        self.stroke_arrays = list(map(numpy_array, strokes))
+        update_strokes_map(self.widget_key, strokes)
 
         self.label.setPixmap(self.get_new_pixmap(strokes))
 
@@ -265,6 +314,8 @@ class StrokesDisplay(QWidget):
         self.setLayout(layout)
 
     def update_and_save_strokes(self, strokes):
+
+        update_strokes_map(self.widget_key, strokes)
 
         strokes_dir = self.strokes_dir
 
@@ -354,3 +405,40 @@ class StrokesDisplay(QWidget):
         painter.end()
 
         return pixmap
+
+def update_strokes_map(widget_key, strokes):
+
+    for inner_map in STROKES_MAP.values():
+
+        with suppress(KeyError):
+            del inner_map[widget_key]
+
+    ###
+    orientations = get_strokes_orientations(strokes)
+
+    ### offset strokes for easier comparison
+
+    offset_strokes_arrays = []
+
+    for points in strokes:
+
+        xs, ys = zip(*points)
+
+        left = min(xs)
+        top = min(ys)
+
+        offset_strokes_arrays.append(
+
+            numpy_array(
+
+                [
+                    (a - left, b - top)
+                    for a, b in points
+                ]
+
+            )
+
+        )
+
+    ###
+    STROKES_MAP[orientations][widget_key] = offset_strokes_arrays

@@ -13,6 +13,10 @@ from PySide6.QtGui import QBrush, QPen, QPainterPath
 from PySide6.QtCore import Qt, QTimer
 
 
+### local imports
+from .strokesmgr import STROKES_MAP, get_strokes_orientations
+
+
 
 ### constants/module level objs
 
@@ -132,8 +136,17 @@ class CanvasScene(QGraphicsScene):
             self.removeItem(item)
 
         STROKE_PATH_PROXIES.clear()
-        STROKES.clear()
 
         del self.path, self.path_proxy
 
         ### check list of strokes for matches
+
+        orientations = get_strokes_orientations(STROKES)
+        print(*orientations)
+
+        key_to_strokes = STROKES_MAP[orientations]
+
+        if key_to_strokes:
+            print('match')
+
+        STROKES.clear()
