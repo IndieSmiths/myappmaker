@@ -8,11 +8,20 @@ from functools import partial
 ## PySide6
 
 from PySide6.QtWidgets import (
+
     QDialog,
+
     QGridLayout,
+    QStackedLayout,
+
+    QWidget,
+    QComboBox,
     QLabel,
     QCheckBox,
     QPushButton,
+
+    QSizePolicy,
+
 )
 
 from PySide6.QtCore import Qt
@@ -45,7 +54,6 @@ get_checked_check_box = partial(get_check_box, True)
 get_unchecked_check_box = partial(get_check_box, False)
 
 
-
 ### dialog definition
 
 class StrokeSettingsDialog(QDialog):
@@ -59,63 +67,92 @@ class StrokeSettingsDialog(QDialog):
         self.recording_dlg = StrokesRecordingDialog(self)
 
         ###
-        self.stroke_display_map = {}
-
-        ###
 
         grid = self.grid = QGridLayout()
 
         ### define captions
 
-        for col, label_text in enumerate(
+        for row, label_text in enumerate(
 
             (
-                "Widget",
-                "Strokes",
-                "Set/reset",
+                "Pick widget:",
+                "Widget:",
+                "Strokes:",
             )
 
         ):
 
             label = QLabel(label_text)
             label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-            grid.addWidget(label, 0, col)
+            grid.addWidget(label, row, 0)
 
-        ### define contents
+        ###
 
-        for row, (widget_key, get_widget) in enumerate(
+        button = QPushButton("Set/reset strokes")
+        button.clicked.connect(self.reset_stroke)
+        button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        grid.addWidget(button, 3, 1)
 
-            (
-                ('label', partial(QLabel, 'A label')),
-                ('unchecked_check_box', get_unchecked_check_box),
-                ('checked_check_box', get_checked_check_box),
-            ),
+        ### populate:
+        ###
+        ### - combobox with widget keys
+        ### - widget stack
+        ### - strokes display stack
 
-            start=1,
+        widget_key_box = self.widget_key_box = QComboBox()
+        widget_key_box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+
+        widget_stack = self.widget_stack = QStackedLayout()
+        strokes_display_stack = self.strokes_display_stack = QStackedLayout()
+
+        for widget_key, get_widget in (
+
+            ('label', partial(QLabel, 'A label')),
+            ('unchecked_check_box', get_unchecked_check_box),
+            ('checked_check_box', get_checked_check_box),
 
         ):
 
-            button = QPushButton("Set/reset strokes")
+            widget_key_box.addItem(widget_key)
+            widget_stack.addWidget(get_widget())
+            strokes_display_stack.addWidget(StrokesDisplay(widget_key))
 
-            button.clicked.connect(
-                partial(self.reset_stroke, widget_key)
-            )
+        ###
 
-            grid.addWidget(get_widget(), row, 0)
+        grid.addWidget(widget_key_box, 0, 1)
 
-            stroke_display = StrokesDisplay(widget_key)
-            self.stroke_display_map[widget_key] = stroke_display
-            grid.addWidget(stroke_display, row, 1)
+        widgets_holder = QWidget()
+        widgets_holder.setLayout(widget_stack)
+        grid.addWidget(widgets_holder, 1, 1)
 
-            grid.addWidget(button, row, 2)
+        strokes_displays_holder = QWidget()
+        strokes_displays_holder.setLayout(strokes_display_stack)
+        grid.addWidget(strokes_displays_holder, 2, 1)
 
         ###
         self.setLayout(self.grid)
 
-    def reset_stroke(self, widget_key):
+        ###
+
+        widget_key_box.setCurrentText('label')
+        widget_key_box.setEditable(False)
+        widget_key_box.currentTextChanged.connect(self.update_stacks)
+        self.update_stacks()
+
+    def update_stacks(self):
+
+        widget_key = self.widget_key_box.currentText()
+        index = self.widget_key_box.currentIndex()
+
+        self.widget_stack.setCurrentIndex(index)
+        self.strokes_display_stack.setCurrentIndex(index)
+
+    def reset_stroke(self):
+
+        widget_key = self.widget_key_box.currentText()
 
         self.recording_dlg.prepare_session(
-            self.stroke_display_map[widget_key]
+            self.strokes_display_stack.currentWidget()
         )
 
         self.recording_dlg.exec()

@@ -150,17 +150,14 @@ class StrokesDisplay(QWidget):
         # and reused (if possible, as a top level object)
         renderer = QSvgRenderer(NOT_FOUND_SVG_BYTE_ARRAY)
 
-        pixmap = QPixmap(100, 100)
+        pixmap = QPixmap(*STROKE_SIZE)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         renderer.render(painter)#, pixmap.rect())
         painter.end()
         self.label.setPixmap(pixmap)
 
-        #svg_widget.renderer().setAspectRatioMode(Qt.KeepAspectRatio)
-
         layout = QHBoxLayout()
-        #layout.addWidget(svg_widget)
         layout.addWidget(self.label)
         self.setLayout(layout)
 
