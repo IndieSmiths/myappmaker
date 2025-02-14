@@ -26,9 +26,6 @@ from PySide6.QtCore import Qt, QByteArray, QPointF
 
 from PySide6.QtGui import QPainter, QPixmap, QPen, QBrush
 
-## numpy
-from numpy import array as numpy_array
-
 
 ### local imports
 
@@ -43,6 +40,7 @@ from .constants import (
     STROKE_DIMENSION,
     STROKE_HALF_DIMENSION,
     LIGHT_GREY_QCOLOR,
+    yield_offset_numpy_arrays,
 )
 
 
@@ -50,7 +48,6 @@ from .constants import (
 ### strokes display widget definition
 
 STROKES_MAP = defaultdict(dict)
-#
 
 NOT_FOUND_SVG_BYTE_ARRAY = (
 
@@ -176,6 +173,8 @@ class StrokesDisplay(QWidget):
 
         update_strokes_map(self.widget_key, strokes)
 
+        ###
+
         strokes_dir = self.strokes_dir
 
         if strokes_dir.exists():
@@ -183,14 +182,14 @@ class StrokesDisplay(QWidget):
 
         strokes_dir.mkdir()
 
+        ###
+
         for index, points in enumerate(strokes):
 
             save_pyl(
                 points,
                 (strokes_dir / f'stroke_{index:>02}.pyl'),
             )
-
-        self.stroke_arrays = list(map(numpy_array, strokes))
 
         self.label.setPixmap(self.get_new_pixmap(strokes))
 
@@ -276,28 +275,7 @@ def update_strokes_map(widget_key, strokes):
     orientations = get_strokes_orientations(strokes)
 
     ### offset strokes for easier comparison
-
-    offset_strokes_arrays = []
-
-    for points in strokes:
-
-        xs, ys = zip(*points)
-
-        left = min(xs)
-        top = min(ys)
-
-        offset_strokes_arrays.append(
-
-            numpy_array(
-
-                [
-                    (a - left, b - top)
-                    for a, b in points
-                ]
-
-            )
-
-        )
+    offset_strokes_arrays = list(yield_offset_numpy_arrays(strokes))
 
     ###
     STROKES_MAP[orientations][widget_key] = offset_strokes_arrays

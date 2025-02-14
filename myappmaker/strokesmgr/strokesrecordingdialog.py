@@ -1,10 +1,7 @@
 """Facility with canvas to record strokes."""
 
-### standard library imports
-
+### standard library import
 from collections import deque
-
-from operator import itemgetter
 
 
 ### third-party imports
@@ -40,10 +37,6 @@ from .constants import (
 
 STROKES = deque()
 STROKE_PATH_PROXIES = []
-
-get_first_item = itemgetter(0)
-get_second_item = itemgetter(1)
-
 
 
 ### class definition

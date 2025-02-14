@@ -1,10 +1,19 @@
 """Facility with canvas to add and organize widgets."""
 
-### standard library import
+### standard library imports
+
 from collections import deque
+
+from itertools import repeat
+
+from operator import itemgetter
+
+from statistics import mean
 
 
 ### third-party imports
+
+## PySide
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem
 
@@ -12,10 +21,14 @@ from PySide6.QtGui import QBrush, QPen, QPainterPath
 
 from PySide6.QtCore import Qt, QTimer
 
+## scipy
+from scipy.spatial.distance import directed_hausdorff
+
 
 ### local imports
 
 from .strokesmgr.strokesdisplay import STROKES_MAP, get_strokes_orientations
+from .strokesmgr.constants import yield_offset_numpy_arrays
 
 
 
@@ -25,6 +38,8 @@ SIZE = (1280, 720)
 
 STROKES = deque()
 STROKE_PATH_PROXIES = []
+
+get_first_item = itemgetter(0)
 
 
 
@@ -143,11 +158,35 @@ class CanvasScene(QGraphicsScene):
         ### check list of strokes for matches
 
         orientations = get_strokes_orientations(STROKES)
-        print(*orientations)
 
         key_to_strokes = STROKES_MAP[orientations]
 
         if key_to_strokes:
-            print('match')
+
+            your_strokes = list(yield_offset_numpy_arrays(STROKES))
+
+            score_widget_key_pairs = sorted(
+
+                (
+
+                    (
+                        mean(
+                            directed_hausdorff(stroke_a, stroke_b)[0]
+                            for stroke_a, stroke_b in zip(widget_strokes, your_strokes)
+                        ),
+                        widget_key,
+                    )
+
+                    for widget_key, widget_strokes in key_to_strokes.items()
+                ),
+                key=get_first_item,
+                reverse=True,
+            )
+
+            score, chosen_widget = score_widget_key_pairs[0]
+            no_of_widgets = len(key_to_strokes)
+
+            print(f"Chosen widget {chosen_widget} with {score} score among {no_of_widgets} widgets.")
+            print()
 
         STROKES.clear()
