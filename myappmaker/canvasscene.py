@@ -14,7 +14,8 @@ from PySide6.QtCore import Qt, QTimer
 
 
 ### local imports
-from .strokesmgr import STROKES_MAP, get_strokes_orientations
+
+from .strokesmgr.strokesdisplay import STROKES_MAP, get_strokes_orientations
 
 
 
