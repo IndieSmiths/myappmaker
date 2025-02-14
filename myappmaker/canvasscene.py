@@ -47,9 +47,11 @@ get_first_item = itemgetter(0)
 
 class CanvasScene(QGraphicsScene):
 
-    def __init__(self):
+    def __init__(self, show_message_on_status_bar):
 
         super().__init__(0, 0, *SIZE)
+
+        self.show_message_on_status_bar = show_message_on_status_bar
 
         ### strokes timer
 
@@ -183,8 +185,17 @@ class CanvasScene(QGraphicsScene):
             )
 
             score, chosen_widget = score_widget_key_pairs[0]
+            no_of_widgets = len(key_to_strokes)
 
-            print(f"Chose widget {chosen_widget} with {score} score among {no_of_widgets} widgets.")
-            print()
+            message = (
+                f"Chose {chosen_widget} (score = {score}; smaller is better)"
+                f" among {no_of_widgets} widgets."
+            )
 
+        else:
+            message = "Strokes didn't match any known widget."
+
+        ###
+
+        self.show_message_on_status_bar(message, 2000)
         STROKES.clear()

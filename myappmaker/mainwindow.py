@@ -7,6 +7,7 @@
 from PySide6.QtWidgets import (
     QMainWindow,
     QToolBar,
+    QStatusBar,
     QGraphicsView,
 )
 
@@ -34,11 +35,6 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(APP_TITLE)
 
-        scene = self.scene = CanvasScene()
-        view = self.view = QGraphicsView(scene)
-
-        self.setCentralWidget(view)
-
         ###
 
         toolbar = QToolBar("My main toolbar")
@@ -47,6 +43,17 @@ class MainWindow(QMainWindow):
         button_action = QAction("Stroke settings", self)
         button_action.triggered.connect(self.showStrokeSettingsDialog)
         toolbar.addAction(button_action)
+
+        ###
+        status_bar = QStatusBar(self)
+        self.setStatusBar(status_bar)
+
+        ###
+
+        scene = self.scene = CanvasScene(status_bar.showMessage)
+        view = self.view = QGraphicsView(scene)
+
+        self.setCentralWidget(view)
 
         ###
         self.stroke_settings_dlg = StrokeSettingsDialog(self)
