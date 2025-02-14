@@ -17,23 +17,16 @@ LIGHT_GREY_QCOLOR = QColor(230, 230, 230)
 
 
 def yield_offset_numpy_arrays(strokes):
-    """Yield strokes moved to origin.
-
-    That is, their imaginary bounding box is moved so that their topleft
-    is at the origin (0, 0).
-    """
+    """Yield stroke points moved so first one is at origin."""
 
     for points in strokes:
 
-        xs, ys = zip(*points)
-
-        left = min(xs)
-        top = min(ys)
+        x1, y1 = points[0]
 
         yield numpy_array(
 
             [
-                (a - left, b - top)
+                (a - x1, b - y1)
                 for a, b in points
             ]
 

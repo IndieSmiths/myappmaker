@@ -140,7 +140,7 @@ class CanvasScene(QGraphicsScene):
     def mouseReleaseEvent(self, event):
 
         self.last_point = None
-        self.strokes_timer.start(500)
+        self.strokes_timer.start(700)
 
     def process_strokes(self):
 
@@ -180,13 +180,11 @@ class CanvasScene(QGraphicsScene):
                     for widget_key, widget_strokes in key_to_strokes.items()
                 ),
                 key=get_first_item,
-                reverse=True,
             )
 
             score, chosen_widget = score_widget_key_pairs[0]
-            no_of_widgets = len(key_to_strokes)
 
-            print(f"Chosen widget {chosen_widget} with {score} score among {no_of_widgets} widgets.")
+            print(f"Chose widget {chosen_widget} with {score} score among {no_of_widgets} widgets.")
             print()
 
         STROKES.clear()
