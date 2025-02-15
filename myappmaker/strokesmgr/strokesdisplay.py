@@ -299,14 +299,14 @@ def get_strokes_orientations(strokes):
 
         height = bottom - top
 
-        if width * .7 > height:
-            orientation = 'landscape'
+        if height * 4 < width:
+            orientation = 'horizontal'
 
-        elif height * .7 > width:
-            orientation = 'portrait'
+        elif width * 4 < height:
+            orientation = 'vertical'
 
         else:
-            orientation = 'square'
+            orientation = 'neither'
 
         orientations.append(orientation)
 

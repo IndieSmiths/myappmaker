@@ -167,28 +167,40 @@ class CanvasScene(QGraphicsScene):
 
             your_strokes = list(yield_offset_numpy_arrays(STROKES))
 
-            score_widget_key_pairs = sorted(
+            hdist_widget_key_pairs = sorted(
 
                 (
 
                     (
+
                         mean(
-                            directed_hausdorff(stroke_a, stroke_b)[0]
+
+                            max(
+                                directed_hausdorff(stroke_a, stroke_b)[0],
+                                directed_hausdorff(stroke_b, stroke_a)[0],
+                            )
+
                             for stroke_a, stroke_b in zip(widget_strokes, your_strokes)
+
                         ),
+
                         widget_key,
+
                     )
 
                     for widget_key, widget_strokes in key_to_strokes.items()
                 ),
+
                 key=get_first_item,
+
             )
 
-            score, chosen_widget = score_widget_key_pairs[0]
+            chosen_widget = hdist_widget_key_pairs[0][1]
+            hdists = [round(item[0]) for item in hdist_widget_key_pairs]
             no_of_widgets = len(key_to_strokes)
 
             message = (
-                f"Chose {chosen_widget} (score = {score}; smaller is better)"
+                f"Chose {chosen_widget} (hausdorff distances = {hdists})"
                 f" among {no_of_widgets} widgets."
             )
 
