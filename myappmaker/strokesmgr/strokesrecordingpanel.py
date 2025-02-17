@@ -9,13 +9,11 @@ from collections import deque
 ## PySide6
 
 from PySide6.QtWidgets import (
-
+    QWidget,
+    QLayout,
     QGraphicsScene,
     QGraphicsView,
-    QDialog,
-    QLayout,
     QVBoxLayout,
-    QLabel,
 )
 
 from PySide6.QtGui import QPen, QPainterPath
@@ -24,6 +22,7 @@ from PySide6.QtCore import Qt, QTimer, QLine
 
 
 ### local imports
+
 from .constants import (
     STROKE_DIMENSION,
     STROKE_SIZE,
@@ -43,11 +42,9 @@ STROKE_PATH_PROXIES = []
 
 class StrokesRecordingScene(QGraphicsScene):
 
-    def __init__(self, recording_dlg):
+    def __init__(self):
 
         super().__init__(0, 0, *STROKE_SIZE)
-
-        self.recording_dlg = recording_dlg
 
         ### strokes timer
 
@@ -190,36 +187,27 @@ class StrokesRecordingScene(QGraphicsScene):
 
             offset_strokes.append(offset_points)
 
-        self.recording_dlg.stroke_display.update_and_save_strokes(offset_strokes)
+        (
+            self
+            .stroke_display
+            .update_and_save_strokes(offset_strokes)
+        )
 
 
-class StrokesRecordingDialog(QDialog):
+
+class StrokesRecordingPanel(QWidget):
 
     def __init__(self, parent=None):
 
-        super().__init__(parent)
+        super().__init__()
 
-        self.setWindowTitle("Strokes Recording")
+        scene = self.scene = StrokesRecordingScene()
+        self.view = QGraphicsView(scene)
 
-        vlayout = QVBoxLayout()
+        layout = QVBoxLayout()
+        layout.addWidget(self.view)
+        layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.setLayout(layout)
 
-        ### label
-
-        self.label = QLabel('Draw widget below')
-        vlayout.addWidget(self.label)
-
-        ### recording scene and its view
-
-        scene = self.scene = StrokesRecordingScene(recording_dlg=self)
-        view = self.view = QGraphicsView(scene)
-        vlayout.addWidget(self.view)
-
-        ###
-
-        vlayout.setSizeConstraint(QLayout.SetFixedSize)
-        self.setLayout(vlayout)
-
-    def prepare_session(self, stroke_display):
-
-        self.label.setText(stroke_display.widget_key)
-        self.stroke_display = stroke_display
+    def prepare(self, stroke_display):
+        self.scene.stroke_display = stroke_display
