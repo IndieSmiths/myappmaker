@@ -195,19 +195,29 @@ class CanvasScene(QGraphicsScene):
 
             )
 
-            chosen_widget = hdist_widget_key_pairs[0][1]
-            hdists = [round(item[0]) for item in hdist_widget_key_pairs]
+            (avg_of_hd_distances, corresponding_widget) = hdist_widget_key_pairs[0]
             no_of_widgets = len(key_to_strokes)
 
-            message = (
-                f"Chose {chosen_widget} (hausdorff distances = {hdists})"
-                f" among {no_of_widgets} widgets."
-            )
+            # TODO allows this maximum tolerable hausdorff distance
+            # (here we use 60) to be set by the user
+
+            if avg_of_hd_distances < 60:
+
+                rounded_avg_hd = round(avg_of_hd_distances)
+
+                message = (
+                    f"Chose {corresponding_widget}"
+                    f" (average hausdorff of strokes = ~{rounded_avg_hd})"
+                    f" among {no_of_widgets} widgets."
+                )
+
+            else:
+                message = "Possible matches weren't similar enough."
 
         else:
-            message = "Strokes didn't match any known widget."
+            message = "No widget with this stroke count or orientations"
 
         ###
 
-        self.show_message_on_status_bar(message, 2000)
+        self.show_message_on_status_bar(message, 2500)
         STROKES.clear()

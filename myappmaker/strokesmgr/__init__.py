@@ -18,7 +18,6 @@ from PySide6.QtWidgets import (
     QComboBox,
     QLabel,
     QCheckBox,
-    QPushButton,
 
     QSizePolicy,
 
@@ -75,31 +74,27 @@ class StrokeSettingsDialog(QDialog):
 
         ### define captions
 
+        topright_alignment = (
+            Qt.AlignmentFlag.AlignRight
+            | Qt.AlignmentFlag.AlignTop
+        )
+
         for row, label_text in enumerate(
 
             (
                 "Pick widget:",
                 "Widget:",
                 "Strokes:",
+                "(Re)set strokes:",
             )
 
         ):
-
-            label = QLabel(label_text)
-            label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
-            grid.addWidget(label, row, 0)
+            grid.addWidget(QLabel(label_text), row, 0, topright_alignment)
 
         ###
 
         self.recording_panel = StrokesRecordingPanel(self)
-
-        button = QPushButton("Show/hide editor")
-        button.clicked.connect(self.toggle_recording_panel)
-        button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-
-        grid.addWidget(button, 3, 0)
         grid.addWidget(self.recording_panel, 3, 1)
-        self.recording_panel.hide()
 
         ###
 
@@ -133,11 +128,17 @@ class StrokeSettingsDialog(QDialog):
 
         widgets_holder = QWidget()
         widgets_holder.setLayout(widget_stack)
-        grid.addWidget(widgets_holder, 1, 1)
+
+        topleft_alignment = (
+            Qt.AlignmentFlag.AlignLeft
+            | Qt.AlignmentFlag.AlignTop
+        )
+
+        grid.addWidget(widgets_holder, 1, 1, topleft_alignment)
 
         strokes_displays_holder = QWidget()
         strokes_displays_holder.setLayout(strokes_display_stack)
-        grid.addWidget(strokes_displays_holder, 2, 1)
+        grid.addWidget(strokes_displays_holder, 2, 1, topleft_alignment)
 
         ###
         self.setLayout(self.grid)
@@ -160,17 +161,3 @@ class StrokeSettingsDialog(QDialog):
         self.recording_panel.prepare(
             self.strokes_display_stack.currentWidget()
         )
-
-    def toggle_recording_panel(self):
-
-        rpanel = self.recording_panel
-
-        is_visible = rpanel.isVisible()
-
-        if is_visible:
-            rpanel.hide()
-
-        else:
-
-            rpanel.prepare(self.strokes_display_stack.currentWidget())
-            rpanel.show()
