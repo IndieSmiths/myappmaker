@@ -27,8 +27,12 @@ from scipy.spatial.distance import directed_hausdorff
 
 ### local imports
 
-from .strokesmgr.strokesdisplay import STROKES_MAP, get_strokes_orientations
-from .strokesmgr.constants import yield_offset_numpy_arrays
+from .strokesmgr.utils import (
+    STROKES_MAP,
+    are_ratios_logs_similar,
+    get_strokes_ratios_logs,
+    yield_offset_numpy_arrays,
+)
 
 
 
@@ -159,27 +163,37 @@ class CanvasScene(QGraphicsScene):
 
         ### check list of strokes for matches
 
-        orientations = get_strokes_orientations(STROKES)
+        no_of_strokes = len(STROKES)
 
-        key_to_strokes = STROKES_MAP[orientations]
+        possible_matches = STROKES_MAP[no_of_strokes]
 
-        if key_to_strokes:
+        if possible_matches:
 
             your_strokes = list(yield_offset_numpy_arrays(STROKES))
+
+            your_ratios_logs = get_strokes_ratios_logs(STROKES)
+
+            # TODO allows this maximum log diff tolerance to be set by the user
+            ratio_log_diff_tolerance = 0.6
 
             hdist_widget_key_pairs = sorted(
 
                 (
 
+                    ### item
+
                     (
 
                         mean(
+
+                            ### item
 
                             max(
                                 directed_hausdorff(stroke_a, stroke_b)[0],
                                 directed_hausdorff(stroke_b, stroke_a)[0],
                             )
 
+                            ### source
                             for stroke_a, stroke_b in zip(widget_strokes, your_strokes)
 
                         ),
@@ -188,34 +202,61 @@ class CanvasScene(QGraphicsScene):
 
                     )
 
-                    for widget_key, widget_strokes in key_to_strokes.items()
+                    ### source
+
+                    for widget_key, (widget_ratios_logs, widget_strokes)
+                    in possible_matches.items()
+
+                    ## filter
+
+                    if are_ratios_logs_similar(
+                         your_ratios_logs,
+                         widget_ratios_logs,
+                         ratio_log_diff_tolerance,
+                       )
+
                 ),
 
                 key=get_first_item,
 
             )
 
-            (avg_of_hd_distances, corresponding_widget) = hdist_widget_key_pairs[0]
-            no_of_widgets = len(key_to_strokes)
+            # default message
+            message = "Possible matches weren't similar enough."
 
-            # TODO allows this maximum tolerable hausdorff distance
-            # (here we use 60) to be set by the user
+            # check whether distances of best strokes are within
+            # tolerable distance
 
-            if avg_of_hd_distances < 60:
+            if hdist_widget_key_pairs:
 
-                rounded_avg_hd = round(avg_of_hd_distances)
-
-                message = (
-                    f"Chose {corresponding_widget}"
-                    f" (average hausdorff of strokes = ~{rounded_avg_hd})"
-                    f" among {no_of_widgets} widgets."
+                (avg_of_hd_distances, corresponding_widget) = (
+                    hdist_widget_key_pairs[0]
                 )
+                no_of_widgets = len(possible_matches)
+
+                # TODO allows this maximum tolerable hausdorff distance
+                # to be set by the user
+                maximum_tolerable_hausdorff_distance = 60
+
+                if avg_of_hd_distances < maximum_tolerable_hausdorff_distance:
+
+                    rounded_avg_hd = round(avg_of_hd_distances)
+
+                    # overwrite message
+
+                    message = (
+                        f"Chose {corresponding_widget}"
+                        f" (average hausdorff of strokes = ~{rounded_avg_hd})"
+                        f" among {no_of_widgets} widgets."
+                    )
+                else:
+                    message += "(hausdorff distance too large)"
 
             else:
-                message = "Possible matches weren't similar enough."
+                message += " (proportions didn't match)"
 
         else:
-            message = "No widget with this stroke count or orientations"
+            message = "No widget with this stroke count"
 
         ###
 

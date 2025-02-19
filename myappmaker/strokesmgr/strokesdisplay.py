@@ -3,11 +3,9 @@
 
 from shutil import rmtree
 
-from collections import defaultdict, deque
+from collections import deque
 
 from itertools import repeat
-
-from contextlib import suppress
 
 
 ### third-party imports
@@ -35,19 +33,18 @@ from ..ourstdlibs.pyl import load_pyl, save_pyl
 
 from .getnotfoundsvg import get_not_found_icon_svg_text
 
+from .utils import update_strokes_map
+
 from .constants import (
     STROKE_SIZE,
     STROKE_DIMENSION,
     STROKE_HALF_DIMENSION,
     LIGHT_GREY_QCOLOR,
-    yield_offset_numpy_arrays,
 )
 
 
 
 ### strokes display widget definition
-
-STROKES_MAP = defaultdict(dict)
 
 NOT_FOUND_SVG_BYTE_ARRAY = (
 
@@ -263,52 +260,4 @@ class StrokesDisplay(QWidget):
         painter.end()
 
         return pixmap
-
-def update_strokes_map(widget_key, strokes):
-
-    for inner_map in STROKES_MAP.values():
-
-        with suppress(KeyError):
-            del inner_map[widget_key]
-
-    ###
-    orientations = get_strokes_orientations(strokes)
-
-    ### offset strokes for easier comparison
-    offset_strokes_arrays = list(yield_offset_numpy_arrays(strokes))
-
-    ###
-    STROKES_MAP[orientations][widget_key] = offset_strokes_arrays
-
-
-def get_strokes_orientations(strokes):
-
-    orientations = []
-
-    for points in strokes:
-
-        xs, ys = zip(*points)
-
-        left = min(xs)
-        right = max(xs)
-
-        width = right - left
-
-        top = min(ys)
-        bottom = max(ys)
-
-        height = bottom - top
-
-        if height * 4 < width:
-            orientation = 'horizontal'
-
-        elif width * 4 < height:
-            orientation = 'vertical'
-
-        else:
-            orientation = 'neither'
-
-        orientations.append(orientation)
-
-    return tuple(orientations)
 
