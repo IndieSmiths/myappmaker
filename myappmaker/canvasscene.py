@@ -17,7 +17,7 @@ from PySide6.QtWidgets import QGraphicsScene
 
 from PySide6.QtGui import QBrush, QPen, QPainterPath
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 
 ## scipy
 from scipy.spatial.distance import directed_hausdorff
@@ -54,26 +54,30 @@ class CanvasScene(QGraphicsScene):
         super().__init__(0, 0, *SIZE)
 
         self.show_message_on_status_bar = show_message_on_status_bar
-
-        ### strokes timer
-
-        stimer = self.strokes_timer = QTimer()
-        stimer.timeout.connect(self.process_strokes)
-
         ### 
 
         self.strokes_pen = QPen(Qt.red)
         self.strokes_pen.setWidth(3)
 
         ###
+
         self.last_point = None
+        self.watch_out_for_shift_release = False
 
     def mouseMoveEvent(self, event):
 
-        ### leave right away if left button is NOT pressed
+        ### leave right away if either...
+        ### - mouse left button is NOT pressed
+        ### - shift key is NOT pressed
 
-        if not (event.buttons() & Qt.LeftButton):
+        if (
+            not (event.buttons() & Qt.LeftButton)
+            or not (event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+        ):
             return
+
+        ###
+        self.watch_out_for_shift_release = True
 
         ### grab/reference points locally
 
@@ -87,9 +91,6 @@ class CanvasScene(QGraphicsScene):
         ### stroke
 
         if last_point is None:
-
-            ### stop counter
-            self.strokes_timer.stop()
 
             ### create a path and its QGraphics proxy to represent the stroke
 
@@ -129,15 +130,21 @@ class CanvasScene(QGraphicsScene):
 
 
     def mouseReleaseEvent(self, event):
-
         self.last_point = None
-        self.strokes_timer.start(700)
+
+    def keyReleaseEvent(self, event):
+
+        if (
+            event.key() == Qt.Key.Key_Shift
+            and self.watch_out_for_shift_release
+        ):
+
+            self.watch_out_for_shift_release = False
+            self.process_strokes()
 
     def process_strokes(self):
 
         ### remove path proxies
-
-        self.strokes_timer.stop()
 
         for item in STROKE_PATH_PROXIES:
             self.removeItem(item)
