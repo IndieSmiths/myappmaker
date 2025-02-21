@@ -8,14 +8,12 @@ from itertools import repeat
 
 from operator import itemgetter
 
-from statistics import mean
-
 
 ### third-party imports
 
 ## PySide
 
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem
+from PySide6.QtWidgets import QGraphicsScene
 
 from PySide6.QtGui import QBrush, QPen, QPainterPath
 
@@ -31,7 +29,7 @@ from .strokesmgr.utils import (
     STROKES_MAP,
     are_ratios_logs_similar,
     get_strokes_ratios_logs,
-    yield_offset_numpy_arrays,
+    get_offset_union_array,
 )
 
 
@@ -61,19 +59,6 @@ class CanvasScene(QGraphicsScene):
 
         stimer = self.strokes_timer = QTimer()
         stimer.timeout.connect(self.process_strokes)
-
-        ### rect
-
-        rect = QGraphicsRectItem(200, 200, 100, 100)
-
-        brush = QBrush(Qt.blue)
-        rect.setBrush(brush)
-
-        pen = QPen(Qt.green)
-        pen.setWidth(10)
-        rect.setPen(pen)
-
-        self.addItem(rect)
 
         ### 
 
@@ -169,9 +154,11 @@ class CanvasScene(QGraphicsScene):
 
         if possible_matches:
 
-            your_strokes = list(yield_offset_numpy_arrays(STROKES))
+            union_of_strokes = sum(STROKES, [])
 
-            your_ratios_logs = get_strokes_ratios_logs(STROKES)
+            your_ratios_logs = get_strokes_ratios_logs(union_of_strokes, STROKES)
+
+            your_union_array = get_offset_union_array(union_of_strokes)
 
             # TODO allows this maximum log diff tolerance to be set by the user
             ratio_log_diff_tolerance = 0.6
@@ -184,18 +171,9 @@ class CanvasScene(QGraphicsScene):
 
                     (
 
-                        mean(
-
-                            ### item
-
-                            max(
-                                directed_hausdorff(stroke_a, stroke_b)[0],
-                                directed_hausdorff(stroke_b, stroke_a)[0],
-                            )
-
-                            ### source
-                            for stroke_a, stroke_b in zip(widget_strokes, your_strokes)
-
+                        max(
+                            directed_hausdorff(your_union_array, widget_union_array)[0],
+                            directed_hausdorff(widget_union_array, your_union_array)[0],
                         ),
 
                         widget_key,
@@ -204,7 +182,7 @@ class CanvasScene(QGraphicsScene):
 
                     ### source
 
-                    for widget_key, (widget_ratios_logs, widget_strokes)
+                    for widget_key, (widget_ratios_logs, widget_union_array)
                     in possible_matches.items()
 
                     ## filter
@@ -249,6 +227,7 @@ class CanvasScene(QGraphicsScene):
                         f" (average hausdorff of strokes = ~{rounded_avg_hd})"
                         f" among {no_of_widgets} widgets."
                     )
+
                 else:
                     message += "(hausdorff distance too large)"
 

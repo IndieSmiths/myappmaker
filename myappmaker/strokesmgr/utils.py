@@ -26,45 +26,29 @@ def update_strokes_map(widget_key, strokes):
     ### 
     no_of_strokes = len(strokes)
 
-    ###
-    ratios_logs = get_strokes_ratios_logs(strokes)
-
-    ### offset strokes for easier comparison
-    offset_strokes_arrays = list(yield_offset_numpy_arrays(strokes))
+    ### union of strokes
+    union_of_strokes = sum(strokes, [])
 
     ###
-    STROKES_MAP[no_of_strokes][widget_key] = (ratios_logs, offset_strokes_arrays)
+    ratios_logs = get_strokes_ratios_logs(union_of_strokes, strokes)
+
+    ### get offset union for easier comparison
+    offset_union_array = get_offset_union_array(union_of_strokes)
+
+    ###
+    STROKES_MAP[no_of_strokes][widget_key] = (ratios_logs, offset_union_array)
 
 
-def yield_offset_numpy_arrays(strokes):
-    """Yield stroke points moved so first one is at origin."""
+def get_strokes_ratios_logs(union_of_strokes, strokes):
+    """Return tuple w/ ln of width:height ratios.
 
-    for points in strokes:
-
-        x1, y1 = points[0]
-
-        yield numpy_array(
-
-            [
-                (a - x1, b - y1)
-                for a, b in points
-            ]
-
-        )
-
-
-# XXX next possible steps:
-# - include width and height of stroke union for comparison
-#   - this way strokes from users can be scaledand the
-# - also include natural log of the width/height ratio of the
-#   stroke union as first ratio to be compared (it can be
-#   calculated with highest width and height among strokes
-
-def get_strokes_ratios_logs(strokes):
+    That is, width:height ratio of union of strokes and of each stroke
+    individually.
+    """
 
     ratios_logs = []
 
-    for points in strokes:
+    for points in (union_of_strokes, *strokes):
 
         xs, ys = zip(*points)
 
@@ -117,6 +101,27 @@ def get_strokes_ratios_logs(strokes):
         ratios_logs.append(log(width/height))
 
     return tuple(ratios_logs)
+
+
+def get_offset_union_array(union_of_strokes):
+    """Yield offset strokes so 1st point in 1st stroke is at origin.
+
+    Moved strokes are yielded as numpy arrays.
+    """
+
+    ### coordinates of first point from first stroke
+    x_offset, y_offset = union_of_strokes[0]
+
+    ### offset all points in all strokes ac
+
+    return numpy_array(
+
+        [
+            (a - x_offset, b - y_offset)
+            for a, b in union_of_strokes
+        ]
+
+    )
 
 
 def are_ratios_logs_similar(ratios_logs_a, ratios_logs_b, tolerance):
