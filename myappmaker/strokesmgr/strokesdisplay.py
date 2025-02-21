@@ -54,6 +54,8 @@ NOT_FOUND_SVG_BYTE_ARRAY = (
 
 )
 
+SVG_RENDERER = QSvgRenderer(NOT_FOUND_SVG_BYTE_ARRAY)
+
 TOP_STROKE_PEN = QPen()
 TOP_STROKE_PEN.setWidth(4)
 TOP_STROKE_PEN.setColor(Qt.black)
@@ -106,6 +108,7 @@ class StrokesDisplay(QWidget):
         super().__init__()
 
         ###
+
         if self.__class__.stroke_bg is None:
             self.__class__.stroke_bg = _get_stroke_bg()
 
@@ -140,14 +143,10 @@ class StrokesDisplay(QWidget):
 
     def init_empty_display(self):
 
-        # TODO perhaps this renderer can be created only once
-        # and reused (if possible, as a top level object)
-        renderer = QSvgRenderer(NOT_FOUND_SVG_BYTE_ARRAY)
-
         pixmap = QPixmap(*STROKE_SIZE)
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
-        renderer.render(painter)#, pixmap.rect())
+        SVG_RENDERER.render(painter)#, pixmap.rect())
         painter.end()
         self.label.setPixmap(pixmap)
 
