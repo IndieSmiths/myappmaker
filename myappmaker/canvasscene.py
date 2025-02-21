@@ -32,6 +32,12 @@ from .strokesmgr.utils import (
     get_offset_union_array,
 )
 
+from .widgets import (
+    get_label,
+    get_unchecked_check_box,
+    get_checked_check_box,
+)
+
 
 
 ### constants/module level objs
@@ -52,6 +58,8 @@ class CanvasScene(QGraphicsScene):
     def __init__(self, show_message_on_status_bar):
 
         super().__init__(0, 0, *SIZE)
+
+        self.setBackgroundBrush(Qt.white)
 
         self.show_message_on_status_bar = show_message_on_status_bar
         ### 
@@ -214,7 +222,7 @@ class CanvasScene(QGraphicsScene):
 
             if hdist_widget_key_pairs:
 
-                (avg_of_hd_distances, corresponding_widget) = (
+                (hd_distance, chosen_widget_key) = (
                     hdist_widget_key_pairs[0]
                 )
                 no_of_widgets = len(possible_matches)
@@ -223,20 +231,63 @@ class CanvasScene(QGraphicsScene):
                 # to be set by the user
                 maximum_tolerable_hausdorff_distance = 60
 
-                if avg_of_hd_distances < maximum_tolerable_hausdorff_distance:
+                if hd_distance < maximum_tolerable_hausdorff_distance:
 
-                    rounded_avg_hd = round(avg_of_hd_distances)
+                    rounded_hd = round(hd_distance)
 
                     # overwrite message
 
                     message = (
-                        f"Chose {corresponding_widget}"
-                        f" (average hausdorff of strokes = ~{rounded_avg_hd})"
+                        f"Chose {chosen_widget_key}"
+                        f" (average hausdorff of strokes = ~{rounded_hd})"
                         f" among {no_of_widgets} widgets."
                     )
 
+                    ### get position for widget
+
+                    xs, ys = zip(*union_of_strokes)
+
+                    left = min(xs)
+                    right = max(xs)
+
+                    width = right - left
+
+                    top = min(ys)
+                    bottom = max(ys)
+
+                    height = top - bottom
+
+                    x = left + width/2
+                    y = top + height/2
+
+                    # XXX the subtraction from y below is arbitrary: it simply
+                    # looks better positioned this way;
+                    #
+                    # investigate why is that when you have the time (for now
+                    # it is not an issue cause the user will be able to
+                    # reposition objects on canvas)
+                    y -= height
+
+
+                    ###
+
+                    if chosen_widget_key == 'label':
+                        # using get_label for the sake of conformity here,
+                        # since we could just use QGraphicsScene.addText()
+                        # instead
+                        get_widget = get_label
+
+                    elif chosen_widget_key == 'unchecked_check_box':
+                        get_widget = get_unchecked_check_box
+
+                    elif chosen_widget_key == 'checked_check_box':
+                        get_widget = get_checked_check_box
+
+                    widget_proxy = self.addWidget(get_widget())
+                    widget_proxy.setPos(x, y)
+
                 else:
-                    message += "(hausdorff distance too large)"
+                    message += " (hausdorff distance too large)"
 
             else:
                 message += " (proportions didn't match)"
