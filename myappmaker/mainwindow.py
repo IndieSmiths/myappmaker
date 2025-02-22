@@ -26,7 +26,6 @@ from .strokesmgr import StrokeSettingsDialog
 
 
 
-
 class MainWindow(QMainWindow):
 
     def __init__(self):
@@ -34,15 +33,6 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle(APP_TITLE)
-
-        ###
-
-        toolbar = QToolBar("My main toolbar")
-        self.addToolBar(toolbar)
-
-        button_action = QAction("Stroke settings", self)
-        button_action.triggered.connect(self.showStrokeSettingsDialog)
-        toolbar.addAction(button_action)
 
         ###
         status_bar = QStatusBar(self)
@@ -58,6 +48,16 @@ class MainWindow(QMainWindow):
         ###
         self.stroke_settings_dlg = StrokeSettingsDialog(self)
 
-    def showStrokeSettingsDialog(self, s):
-        self.stroke_settings_dlg.exec()
+        ###
 
+        toolbar = QToolBar("My main toolbar")
+        self.addToolBar(toolbar)
+
+        for text, operation in (
+            ("Stroke settings", self.stroke_settings_dlg.exec),
+            ("Clear canvas", self.scene.clear),
+        ):
+
+            btn = QAction(text, self)
+            btn.triggered.connect(operation)
+            toolbar.addAction(btn)
