@@ -1,7 +1,5 @@
 """Facility for main window."""
 
-
-
 ### third-party imports
 
 from PySide6.QtWidgets import (
@@ -22,7 +20,7 @@ from .appinfo import APP_TITLE, ORG_DIR_NAME, APP_DIR_NAME
 
 from .canvasscene import CanvasScene
 
-from .strokesmgr import StrokeSettingsDialog
+from .strokesmgmt import StrokeSettingsDialog
 
 
 

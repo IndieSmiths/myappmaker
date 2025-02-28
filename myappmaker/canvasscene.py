@@ -17,7 +17,7 @@ from PySide6.QtCore import Qt
 
 ### local imports
 
-from .strokesmgr.utils import get_stroke_matches_data
+from .strokesmgmt.utils import get_stroke_matches_data
 
 from .widgets import (
     get_label,
