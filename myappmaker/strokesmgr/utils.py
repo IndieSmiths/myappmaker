@@ -3,17 +3,31 @@
 
 from collections import defaultdict
 
+from operator import itemgetter
+
 from math import log
 
 from contextlib import suppress
 
 
-### third-party import
+### third-party imports
+
 from numpy import array as numpy_array
+
+from scipy.spatial.distance import directed_hausdorff
 
 
 
 STROKES_MAP = defaultdict(dict)
+
+# TODO allow this maximum log diff tolerance to be set by the user
+RATIO_LOG_DIFF_TOLERANCE = 0.6
+
+# TODO allow this maximum tolerable hausdorff distance
+# to be set by the user
+MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE = 60
+
+get_first_item = itemgetter(0)
 
 
 def update_strokes_map(widget_key, strokes):
@@ -132,3 +146,90 @@ def are_ratios_logs_similar(ratios_logs_a, ratios_logs_b, tolerance):
         for ratio_log_a, ratio_log_b in zip(ratios_logs_a, ratios_logs_b)
 
     )
+
+
+def get_stroke_matches_data(strokes):
+
+    match_data = {}
+    match_data['chosen_widget_key'] = ''
+
+    no_of_strokes = len(strokes)
+
+    possible_matches = STROKES_MAP[no_of_strokes]
+
+    if possible_matches:
+
+        union_of_strokes = sum(strokes, [])
+
+        match_data['union_of_strokes'] = union_of_strokes
+
+        your_ratios_logs = get_strokes_ratios_logs(union_of_strokes, strokes)
+
+        your_union_array = get_offset_union_array(union_of_strokes)
+
+        hdist_widget_key_pairs = sorted(
+
+            (
+
+                ### item
+
+                (
+
+                    max(
+                        directed_hausdorff(your_union_array, widget_union_array)[0],
+                        directed_hausdorff(widget_union_array, your_union_array)[0],
+                    ),
+
+                    widget_key,
+
+                )
+
+                ### source
+
+                for widget_key, (widget_ratios_logs, widget_union_array)
+                in possible_matches.items()
+
+                ## filter
+
+                if are_ratios_logs_similar(
+                     your_ratios_logs,
+                     widget_ratios_logs,
+                     RATIO_LOG_DIFF_TOLERANCE,
+                   )
+
+            ),
+
+            key=get_first_item,
+
+        )
+
+        # default report
+        report = "Possible matches weren't similar enough."
+
+        # check whether distances of best strokes are within
+        # tolerable distance
+
+        if hdist_widget_key_pairs:
+
+            hausdorff_distance, chosen_widget_key = hdist_widget_key_pairs[0]
+            match_data['no_of_widgets'] = len(possible_matches)
+
+            if hausdorff_distance < MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE:
+
+                report = 'match'
+
+                match_data['chosen_widget_key'] = chosen_widget_key
+                match_data['hausdorff_distance'] = hausdorff_distance
+
+            else:
+                report += " (hausdorff distance too large)"
+
+        else:
+            report += " (proportions didn't match)"
+
+    else:
+        report = "No widget with this stroke count"
+
+    match_data['report'] = report
+
+    return match_data

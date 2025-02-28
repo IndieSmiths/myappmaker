@@ -1,12 +1,7 @@
 """Facility with canvas to add and organize widgets."""
 
-### standard library imports
-
+### standard library import
 from collections import deque
-
-from itertools import repeat
-
-from operator import itemgetter
 
 
 ### third-party imports
@@ -19,18 +14,10 @@ from PySide6.QtGui import QBrush, QPen, QPainterPath
 
 from PySide6.QtCore import Qt
 
-## scipy
-from scipy.spatial.distance import directed_hausdorff
-
 
 ### local imports
 
-from .strokesmgr.utils import (
-    STROKES_MAP,
-    are_ratios_logs_similar,
-    get_strokes_ratios_logs,
-    get_offset_union_array,
-)
+from .strokesmgr.utils import get_stroke_matches_data
 
 from .widgets import (
     get_label,
@@ -46,8 +33,6 @@ SIZE = (1280, 720)
 
 STROKES = deque()
 STROKE_PATH_PROXIES = []
-
-get_first_item = itemgetter(0)
 
 
 
@@ -163,139 +148,68 @@ class CanvasScene(QGraphicsScene):
 
         ### check list of strokes for matches
 
-        no_of_strokes = len(STROKES)
+        match_data = get_stroke_matches_data(STROKES)
 
-        possible_matches = STROKES_MAP[no_of_strokes]
+        STROKES.clear()
 
-        if possible_matches:
+        if match_data['chosen_widget_key']:
 
-            union_of_strokes = sum(STROKES, [])
+            chosen_widget_key = match_data['chosen_widget_key']
+            rounded_hd = round(match_data['hausdorff_distance'])
+            no_of_widgets = match_data['no_of_widgets']
 
-            your_ratios_logs = get_strokes_ratios_logs(union_of_strokes, STROKES)
-
-            your_union_array = get_offset_union_array(union_of_strokes)
-
-            # TODO allows this maximum log diff tolerance to be set by the user
-            ratio_log_diff_tolerance = 0.6
-
-            hdist_widget_key_pairs = sorted(
-
-                (
-
-                    ### item
-
-                    (
-
-                        max(
-                            directed_hausdorff(your_union_array, widget_union_array)[0],
-                            directed_hausdorff(widget_union_array, your_union_array)[0],
-                        ),
-
-                        widget_key,
-
-                    )
-
-                    ### source
-
-                    for widget_key, (widget_ratios_logs, widget_union_array)
-                    in possible_matches.items()
-
-                    ## filter
-
-                    if are_ratios_logs_similar(
-                         your_ratios_logs,
-                         widget_ratios_logs,
-                         ratio_log_diff_tolerance,
-                       )
-
-                ),
-
-                key=get_first_item,
-
+            report = (
+                f"Chose {chosen_widget_key}"
+                f" (hausdorff of drawing = ~{rounded_hd})"
+                f" among {no_of_widgets} widgets."
             )
 
-            # default message
-            message = "Possible matches weren't similar enough."
+            ### get position for widget
 
-            # check whether distances of best strokes are within
-            # tolerable distance
+            union_of_strokes = match_data['union_of_strokes']
+            xs, ys = zip(*union_of_strokes)
 
-            if hdist_widget_key_pairs:
+            left = min(xs)
+            right = max(xs)
 
-                (hd_distance, chosen_widget_key) = (
-                    hdist_widget_key_pairs[0]
-                )
-                no_of_widgets = len(possible_matches)
+            width = right - left
 
-                # TODO allows this maximum tolerable hausdorff distance
-                # to be set by the user
-                maximum_tolerable_hausdorff_distance = 60
+            top = min(ys)
+            bottom = max(ys)
 
-                if hd_distance < maximum_tolerable_hausdorff_distance:
+            height = top - bottom
 
-                    rounded_hd = round(hd_distance)
+            x = left + width/2
+            y = top + height/2
 
-                    # overwrite message
+            # XXX the subtraction from y below is arbitrary: it simply
+            # looks better positioned this way;
+            #
+            # investigate why is that when you have the time (for now
+            # it is not an issue cause the user will be able to
+            # reposition objects on canvas)
+            y -= height
 
-                    message = (
-                        f"Chose {chosen_widget_key}"
-                        f" (average hausdorff of strokes = ~{rounded_hd})"
-                        f" among {no_of_widgets} widgets."
-                    )
+            ###
 
-                    ### get position for widget
+            if chosen_widget_key == 'label':
 
-                    xs, ys = zip(*union_of_strokes)
+                # using get_label for the sake of conformity here,
+                # since we could just use QGraphicsScene.addText()
+                # instead
+                get_widget = get_label
 
-                    left = min(xs)
-                    right = max(xs)
+            elif chosen_widget_key == 'unchecked_check_box':
+                get_widget = get_unchecked_check_box
 
-                    width = right - left
+            elif chosen_widget_key == 'checked_check_box':
+                get_widget = get_checked_check_box
 
-                    top = min(ys)
-                    bottom = max(ys)
-
-                    height = top - bottom
-
-                    x = left + width/2
-                    y = top + height/2
-
-                    # XXX the subtraction from y below is arbitrary: it simply
-                    # looks better positioned this way;
-                    #
-                    # investigate why is that when you have the time (for now
-                    # it is not an issue cause the user will be able to
-                    # reposition objects on canvas)
-                    y -= height
-
-
-                    ###
-
-                    if chosen_widget_key == 'label':
-                        # using get_label for the sake of conformity here,
-                        # since we could just use QGraphicsScene.addText()
-                        # instead
-                        get_widget = get_label
-
-                    elif chosen_widget_key == 'unchecked_check_box':
-                        get_widget = get_unchecked_check_box
-
-                    elif chosen_widget_key == 'checked_check_box':
-                        get_widget = get_checked_check_box
-
-                    widget_proxy = self.addWidget(get_widget())
-                    widget_proxy.setPos(x, y)
-
-                else:
-                    message += " (hausdorff distance too large)"
-
-            else:
-                message += " (proportions didn't match)"
+            widget_proxy = self.addWidget(get_widget())
+            widget_proxy.setPos(x, y)
 
         else:
-            message = "No widget with this stroke count"
+            report = match_data['report']
 
         ###
-
-        self.show_message_on_status_bar(message, 2500)
-        STROKES.clear()
+        self.show_message_on_status_bar(report, 2500)

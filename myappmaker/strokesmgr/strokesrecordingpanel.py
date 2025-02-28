@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsView,
     QVBoxLayout,
+    QMessageBox,
 )
 
 from PySide6.QtGui import QPen, QPainterPath
@@ -22,6 +23,8 @@ from PySide6.QtCore import Qt, QLine
 
 
 ### local imports
+
+from .utils import get_stroke_matches_data
 
 from .constants import (
     STROKE_DIMENSION,
@@ -42,9 +45,12 @@ STROKE_PATH_PROXIES = []
 
 class StrokesRecordingScene(QGraphicsScene):
 
-    def __init__(self):
+    def __init__(self, recording_panel):
 
         super().__init__(0, 0, *STROKE_SIZE)
+
+        ###
+        self.recording_panel = recording_panel
 
         ###
 
@@ -194,11 +200,35 @@ class StrokesRecordingScene(QGraphicsScene):
 
             offset_strokes.append(offset_points)
 
-        (
-            self
-            .stroke_display
-            .update_and_save_strokes(offset_strokes)
+        ###
+
+        chosen_widget_key = (
+            get_stroke_matches_data(offset_strokes)['chosen_widget_key']
         )
+
+
+        ### if there's a matching widget and it isn't the current one,
+        ### explain to the user that we can't use the drawing because another
+        ### widget is already using it
+
+        if (
+            chosen_widget_key
+            and chosen_widget_key != self.stroke_display.widget_key
+        ):
+
+            QMessageBox.information(
+                self.recording_panel,
+                "Drawing already exists!",
+                (
+                    "The provided drawing can't be used for this widget."
+                    f"It is already in use for the {chosen_widget_key} widget."
+                ),
+            )
+
+        ### otherwise, the new drawing can be set without problems
+
+        else:
+            self.stroke_display.update_and_save_strokes(offset_strokes)
 
 
 
@@ -208,7 +238,7 @@ class StrokesRecordingPanel(QWidget):
 
         super().__init__()
 
-        scene = self.scene = StrokesRecordingScene()
+        scene = self.scene = StrokesRecordingScene(self)
         self.view = QGraphicsView(scene)
 
         layout = QVBoxLayout()
