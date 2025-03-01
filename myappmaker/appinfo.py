@@ -1,5 +1,5 @@
 
-ORG_DIR_NAME = "IndiePython"
+ORG_DIR_NAME = "IndieSmiths"
 
 APP_DIR_NAME = "myappmaker"
 
