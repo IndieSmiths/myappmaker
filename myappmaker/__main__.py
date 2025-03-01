@@ -20,11 +20,21 @@ from .mainwindow import MainWindow
 
 
 
-app = QApplication(sys.argv)
-app.setOrganizationName(ORG_DIR_NAME)
-app.setApplicationName(APP_DIR_NAME)
+def main():
 
-window = MainWindow()
-window.show()
+    app = QApplication(sys.argv)
+    app.setOrganizationName(ORG_DIR_NAME)
+    app.setApplicationName(APP_DIR_NAME)
 
-app.exec()
+    window = MainWindow()
+    window.show()
+
+    app.exec()
+
+
+### when file is run as script...
+
+if __name__ == "__main__":
+
+    ### execute main()
+    main()
