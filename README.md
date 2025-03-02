@@ -1,7 +1,7 @@
 
 # myappmaker
 
-Currently at an early stage of development, myappmaker (working title) aims to be a visual desktop app builder with features for both non-technical and technical users, including block coding and many more. Created and maintained by me, Kennedy R. S. Guerra ([Kennedy's GitHub][] | [Kennedy's website][]), it is based on the original design and ideas provided by William Adams ([Kennedy's GitHub][] | [Kennedy's website][]), who also closely oversees the project's design and development.
+Currently at an early stage of development, myappmaker (working title) aims to be a visual desktop app builder with features for both non-technical and technical users, including block coding and many more. Created and maintained by me, Kennedy R. S. Guerra ([Kennedy's GitHub][] | [Kennedy's website][]), it is based on the original design and ideas provided by William Adams ([William's GitHub][] | [William's website][]), who also closely oversees the project's design and development.
 
 > [!CAUTION]
 > Application at an early stage of development (MVP/alpha/prototype), missing many features and susceptible to crashing/malfunctioning or sudden requirement changes.
