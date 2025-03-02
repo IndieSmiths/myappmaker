@@ -4,7 +4,24 @@
 Currently at an early stage of development, myappmaker (working title) aims to be a visual desktop app builder with features for both non-technical and technical users, including block coding and many more. Created and maintained by me, Kennedy R. S. Guerra ([Kennedy's GitHub][] | [Kennedy's website][]), it is based on the original design and ideas provided by William Adams ([Kennedy's GitHub][] | [Kennedy's website][]), who also closely oversees the project's design and development.
 
 > [!CAUTION]
-> Application at an early stage of development (MVP/Alpha), missing many features and susceptible to crashing/malfunctioning or sudden requirement changes.
+> Application at an early stage of development (MVP/alpha/prototype), missing many features and susceptible to crashing/malfunctioning or sudden requirement changes.
+
+## Progress so far
+
+Being at an early stage of development (MVP/alpha/prototype), myappmaker is receiving new features incrementally. In this section we'll highlight features as we add them. Keep in mind that these features might be changed, replaced or even removed since we are designing and developing it incrementally.
+
+
+### Drawing recognition for widget insertion
+
+Have you ever used pen and paper to sketch an app's interface? Well, in myappmaker you can scribble directly on the canvas and have your drawing replaced by the corresponding widget. Just hold the **Shift** key while drawing and release it once you are finished. Here's a demonstration:
+
+![Drawing recognition demonstration](https://i.imgur.com/SNmOXm3.gif)
+
+For now the widgets are very "default-looking", but in next iterations we intend to add custom looks, even a hand-drawn one.
+
+You actually define the drawings you want to associate with each widget in the stroke settings dialog. Here's a demonstration:
+
+![Setting drawings demonstration](https://i.imgur.com/oOiNsmM.gif)
 
 
 ## Installation/usage
@@ -35,7 +52,7 @@ If you want to use myappmaker without installing it, you'll need 02 things:
 Then, to launch the app, you just need to go to the location where you put the `myappmaker` folder containing the source (not inside it), open the command line and run `python -m myappmaker` or `python3 -m myappmaker`, depending on your system.
 
 
-### Troubleshooting
+## Troubleshooting
 
 The usage of PySide6 may depend on the installation of extra components on your system. If you encounter problems to launch myappmaker, before assuming it is causing problems, first ensure that the problem isn't actually with the PySide6 installation. To do that, copy the PySide6 script below to your disk and execute it with the Python instance where you installed PySide6 (an empty window must appear):
 
@@ -44,7 +61,7 @@ The usage of PySide6 may depend on the installation of extra components on your 
 
 ### code originally found on
 ### https://www.pythonguis.com/tutorials/pyside6-creating-your-first-window/
-### then adapted for usage here
+### then slightly adapted for usage here
 
 from PySide6.QtWidgets import QApplication, QWidget
 
