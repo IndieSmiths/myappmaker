@@ -1,11 +1,15 @@
 [project]
 name = "myappmaker"
 dynamic = ["version"]
-dependencies = ["pyside6"]
+dependencies = [
+    "pyside6",
+    "numpy",
+    "scipy",
+]
 authors = [
   { name="Kennedy Richard", email="kennedy@kennedyrichard.com" },
 ]
-description = "A small example package"
+description = "Visual desktop app builder for non-techical and technical users"
 keywords = ["desktop", "app making", "app building", "gui", "pyside", "qt"]
 readme = "README.md"
 requires-python = ">=3.7"
@@ -28,19 +32,18 @@ classifiers = [
     "Intended Audience :: Other Audience",
 
 ]
-license = "UNLICENSE"
-license-files = ["UNLICEN[CS]E*"]
+license = { text="Unlicense" }
 
 [project.urls]
 Homepage = "https://indiepython.com/myappmaker"
-"Source Code" = "https://github.com/IndiePython/myappmaker"
-Forum = https://github.com/IndiePython/myappmaker/discussions
-"Bug Tracker" = https://github.com/IndiePython/nodezator/issues
-Funding = https://indiepython.com/donate
+"Source Code" = "https://github.com/IndieSmiths/myappmaker"
+Forum = "https://github.com/IndieSmiths/myappmaker/discussions"
+"Bug Tracker" = "https://github.com/IndieSmiths/myappmaker/issues"
+Funding = "https://indiepython.com/donate"
 
 
 [project.gui-scripts]
-myappmaker = myappmaker.__main__:parse_args_and_execute_main
+myappmaker = "myappmaker.__main__:main"
 
 [build-system]
 requires = ["setuptools>=59.6"]
