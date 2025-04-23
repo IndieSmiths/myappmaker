@@ -26,7 +26,7 @@ def main():
     app.setOrganizationName(ORG_DIR_NAME)
     app.setApplicationName(APP_DIR_NAME)
 
-    window = MainWindow()
+    window = MainWindow(app)
     window.show()
 
     app.exec()

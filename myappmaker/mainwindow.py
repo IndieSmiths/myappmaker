@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QGraphicsView,
 )
 
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QKeySequence, QShortcut
 
 from PySide6.QtCore import Qt
 
@@ -22,19 +22,27 @@ from .canvasscene import CanvasScene
 
 from .strokesmgmt.settingsdialog import StrokeSettingsDialog
 
+from .prefsmgmt import PreferencesDialog
+
 
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, app):
 
         super().__init__()
 
         self.setWindowTitle(APP_TITLE)
 
         ###
+
+        qs = self.quit_shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        qs.activated.connect(app.quit, Qt.QueuedConnection)
+
+        ###
         status_bar = QStatusBar(self)
         self.setStatusBar(status_bar)
+        ###
 
         ###
 
@@ -45,6 +53,7 @@ class MainWindow(QMainWindow):
 
         ###
         self.stroke_settings_dlg = StrokeSettingsDialog(self)
+        self.preferences_dlg = PreferencesDialog(self)
 
         ###
 
@@ -52,6 +61,7 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         for text, operation in (
+            ("Preferences", self.preferences_dlg.exec),
             ("Stroke settings", self.stroke_settings_dlg.exec),
             ("Clear canvas", self.scene.clear),
         ):
