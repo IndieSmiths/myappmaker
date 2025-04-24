@@ -25,7 +25,10 @@ WRITEABLE_DIR = (
 if not WRITEABLE_DIR.exists():
     WRITEABLE_DIR.mkdir(parents=True)
 
-###
+### filepath for preferences data
+PREFERENCES_FILEPATH = WRITEABLE_DIR / 'preferences.pyl'
+
+### directory for storing strokes data
 
 STROKES_DATA_DIR = WRITEABLE_DIR / 'strokes_data'
 
