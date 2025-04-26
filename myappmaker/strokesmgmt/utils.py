@@ -16,16 +16,12 @@ from numpy import array as numpy_array
 
 from scipy.spatial.distance import directed_hausdorff
 
+### local imports
+from ..prefsmgmt import PREFERENCES, PreferencesKeys
+
 
 
 STROKES_MAP = defaultdict(dict)
-
-# TODO allow this maximum log diff tolerance to be set by the user
-RATIO_LOG_DIFF_TOLERANCE = 0.6
-
-# TODO allow this maximum tolerable hausdorff distance
-# to be set by the user
-MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE = 60
 
 get_first_item = itemgetter(0)
 
@@ -138,16 +134,6 @@ def get_offset_union_array(union_of_strokes):
     )
 
 
-def are_ratios_logs_similar(ratios_logs_a, ratios_logs_b, tolerance):
-
-    return not any(
-
-        abs(ratio_log_a - ratio_log_b) > tolerance
-        for ratio_log_a, ratio_log_b in zip(ratios_logs_a, ratios_logs_b)
-
-    )
-
-
 def get_stroke_matches_data(strokes):
 
     match_data = {}
@@ -166,6 +152,10 @@ def get_stroke_matches_data(strokes):
         your_ratios_logs = get_strokes_ratios_logs(union_of_strokes, strokes)
 
         your_union_array = get_offset_union_array(union_of_strokes)
+
+        ratio_tolerance = (
+            PREFERENCES[PreferencesKeys.RATIO_LOG_DIFF_TOLERANCE.value]
+        )
 
         hdist_widget_key_pairs = sorted(
 
@@ -191,11 +181,14 @@ def get_stroke_matches_data(strokes):
 
                 ## filter
 
-                if are_ratios_logs_similar(
-                     your_ratios_logs,
-                     widget_ratios_logs,
-                     RATIO_LOG_DIFF_TOLERANCE,
-                   )
+                if not any(
+
+                    abs(ratio_log_a - ratio_log_b) > ratio_tolerance
+
+                    for ratio_log_a, ratio_log_b
+                    in zip(your_ratios_logs, widget_ratios_logs)
+
+                )
 
             ),
 
@@ -214,7 +207,11 @@ def get_stroke_matches_data(strokes):
             hausdorff_distance, chosen_widget_key = hdist_widget_key_pairs[0]
             match_data['no_of_widgets'] = len(possible_matches)
 
-            if hausdorff_distance < MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE:
+            hausdorff_tolerance = PREFERENCES[
+                PreferencesKeys.MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE.value
+            ]
+
+            if hausdorff_distance < hausdorff_tolerance:
 
                 report = 'match'
 
