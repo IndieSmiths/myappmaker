@@ -154,7 +154,7 @@ def get_stroke_matches_data(strokes):
         your_union_array = get_offset_union_array(union_of_strokes)
 
         ratio_tolerance = (
-            PREFERENCES[PreferencesKey.RATIO_LOG_DIFF_TOLERANCE.value]
+            PREFERENCES[PreferencesKeys.RATIO_LOG_DIFF_TOLERANCE.value]
         )
 
         hdist_widget_key_pairs = sorted(
@@ -208,7 +208,7 @@ def get_stroke_matches_data(strokes):
             match_data['no_of_widgets'] = len(possible_matches)
 
             hausdorff_tolerance = PREFERENCES[
-                PreferencesKey.MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE.value
+                PreferencesKeys.MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE.value
             ]
 
             if hausdorff_distance < hausdorff_tolerance:
