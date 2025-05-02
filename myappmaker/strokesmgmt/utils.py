@@ -134,10 +134,10 @@ def get_offset_union_array(union_of_strokes):
     )
 
 
-def get_stroke_matches_data(strokes):
+def get_stroke_matches_data(strokes, always_filter=False):
 
     match_data = {}
-    match_data['chosen_widget_key'] = ''
+    match_data['menu_items'] = match_data['chosen_widget_key'] = ''
 
     no_of_strokes = len(strokes)
 
@@ -153,6 +153,16 @@ def get_stroke_matches_data(strokes):
 
         your_union_array = get_offset_union_array(union_of_strokes)
 
+        ### if the 'always_filter' flag is off, we check whether
+        ### the user asked us to show a widget menu after drawing;
+        ###
+        ### if so, it is the same as asking us to not filter the results,
+        ### that is, to list all rather than only matching the best one
+
+        ignore_filtering = always_filter or PREFERENCES[
+          PreferencesKeys.SHOW_WIDGET_MENU_AFTER_DRAWING.value
+        ]
+
         ratio_tolerance = (
             PREFERENCES[PreferencesKeys.RATIO_LOG_DIFF_TOLERANCE.value]
         )
@@ -165,11 +175,14 @@ def get_stroke_matches_data(strokes):
 
                 (
 
+                    ## symmetric Hausdorff distance
+
                     max(
                         directed_hausdorff(your_union_array, widget_union_array)[0],
                         directed_hausdorff(widget_union_array, your_union_array)[0],
                     ),
 
+                    ## widget key
                     widget_key,
 
                 )
@@ -179,9 +192,9 @@ def get_stroke_matches_data(strokes):
                 for widget_key, (widget_ratios_logs, widget_union_array)
                 in possible_matches.items()
 
-                ## filter
+                ## filtering (or not)
 
-                if not any(
+                if ignore_filtering or not any(
 
                     abs(ratio_log_a - ratio_log_b) > ratio_tolerance
 
@@ -192,37 +205,46 @@ def get_stroke_matches_data(strokes):
 
             ),
 
+            ## sorting key
             key=get_first_item,
 
         )
 
-        # default report
-        report = "Possible matches weren't similar enough."
+        if ignore_filtering:
 
-        # check whether distances of best strokes are within
-        # tolerable distance
-
-        if hdist_widget_key_pairs:
-
-            hausdorff_distance, chosen_widget_key = hdist_widget_key_pairs[0]
-            match_data['no_of_widgets'] = len(possible_matches)
-
-            hausdorff_tolerance = PREFERENCES[
-                PreferencesKeys.MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE.value
-            ]
-
-            if hausdorff_distance < hausdorff_tolerance:
-
-                report = 'match'
-
-                match_data['chosen_widget_key'] = chosen_widget_key
-                match_data['hausdorff_distance'] = hausdorff_distance
-
-            else:
-                report += " (hausdorff distance too large)"
+            ### generate menu items
+            match_data['menu_items'] = hdist_widget_key_pairs
+            report = "Didn't filter matches."
 
         else:
-            report += " (proportions didn't match)"
+
+            # default report
+            report = "Possible matches weren't similar enough."
+
+            # check whether distances of best strokes are within
+            # tolerable distance
+
+            if hdist_widget_key_pairs:
+
+                hausdorff_distance, chosen_widget_key = hdist_widget_key_pairs[0]
+                match_data['no_of_widgets'] = len(possible_matches)
+
+                hausdorff_tolerance = PREFERENCES[
+                    PreferencesKeys.MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE.value
+                ]
+
+                if hausdorff_distance < hausdorff_tolerance:
+
+                    report = 'match'
+
+                    match_data['chosen_widget_key'] = chosen_widget_key
+                    match_data['hausdorff_distance'] = hausdorff_distance
+
+                else:
+                    report += " (hausdorff distance too large)"
+
+            else:
+                report += " (proportions didn't match)"
 
     else:
         report = "No widget with this stroke count"

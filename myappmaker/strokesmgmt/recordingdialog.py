@@ -37,7 +37,7 @@ from .display import StrokesDisplay
 
 ### dialog definition
 
-class StrokeSettingsDialog(QDialog):
+class StrokeRecordingDialog(QDialog):
 
     def __init__(self, parent=None):
 

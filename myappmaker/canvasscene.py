@@ -8,11 +8,11 @@ from collections import deque
 
 ## PySide
 
-from PySide6.QtWidgets import QGraphicsScene
+from PySide6.QtWidgets import QGraphicsScene, QMenu
 
-from PySide6.QtGui import QBrush, QPen, QPainterPath
+from PySide6.QtGui import QBrush, QPen, QPainterPath, QCursor
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QPoint
 
 
 ### local imports
@@ -40,9 +40,14 @@ STROKE_PATH_PROXIES = []
 
 class CanvasScene(QGraphicsScene):
 
-    def __init__(self, show_message_on_status_bar):
+    def __init__(self, main_window, show_message_on_status_bar):
 
         super().__init__(0, 0, *SIZE)
+
+        self.cursor = QCursor()
+        self.cursor_offset = QPoint(18, 12)
+
+        self.main_window = main_window
 
         self.setBackgroundBrush(Qt.white)
 
@@ -152,9 +157,48 @@ class CanvasScene(QGraphicsScene):
 
         STROKES.clear()
 
-        if match_data['chosen_widget_key']:
+        ###
 
-            chosen_widget_key = match_data['chosen_widget_key']
+        menu_items = match_data['menu_items']
+        chosen_widget_key = match_data['chosen_widget_key']
+
+        if not menu_items and not chosen_widget_key:
+
+            self.show_message_on_status_bar(match_data['report'], 2500)
+            return
+
+        elif menu_items:
+            
+            menu = QMenu(self.main_window)
+
+            action_to_key = {}
+
+            for index, (_, widget_key) in enumerate(menu_items):
+
+                ac = menu.addAction(f"{widget_key}")
+
+                if index == 0:
+                    first_action = ac
+
+                action_to_key[ac] = widget_key
+
+            ### get position for menu
+            pos = self.cursor.pos() - self.cursor_offset
+
+            ###
+            chosen_action = menu.exec(pos, first_action)
+
+            if chosen_action is None:
+
+                report = "No widget was chosen"
+                self.show_message_on_status_bar(report, 2500)
+                return
+
+            else:
+                chosen_widget_key = action_to_key[chosen_action]
+
+        elif chosen_widget_key:
+
             rounded_hd = round(match_data['hausdorff_distance'])
             no_of_widgets = match_data['no_of_widgets']
 
@@ -164,52 +208,47 @@ class CanvasScene(QGraphicsScene):
                 f" among {no_of_widgets} widgets."
             )
 
-            ### get position for widget
+            self.show_message_on_status_bar(report, 2500)
 
-            union_of_strokes = match_data['union_of_strokes']
-            xs, ys = zip(*union_of_strokes)
+        ### get position for widget
 
-            left = min(xs)
-            right = max(xs)
+        union_of_strokes = match_data['union_of_strokes']
+        xs, ys = zip(*union_of_strokes)
 
-            width = right - left
+        left = min(xs)
+        right = max(xs)
 
-            top = min(ys)
-            bottom = max(ys)
+        width = right - left
 
-            height = top - bottom
+        top = min(ys)
+        bottom = max(ys)
 
-            x = left + width/2
-            y = top + height/2
+        height = top - bottom
 
-            # XXX the subtraction from y below is arbitrary: it simply
-            # looks better positioned this way;
-            #
-            # investigate why is that when you have the time (for now
-            # it is not an issue cause the user will be able to
-            # reposition objects on canvas)
-            y -= height
+        x = left + width/2
+        y = top + height/2
 
-            ###
-
-            if chosen_widget_key == 'label':
-
-                # using get_label for the sake of conformity here,
-                # since we could just use QGraphicsScene.addText()
-                # instead
-                get_widget = get_label
-
-            elif chosen_widget_key == 'unchecked_check_box':
-                get_widget = get_unchecked_check_box
-
-            elif chosen_widget_key == 'checked_check_box':
-                get_widget = get_checked_check_box
-
-            widget_proxy = self.addWidget(get_widget())
-            widget_proxy.setPos(x, y)
-
-        else:
-            report = match_data['report']
-
+        # XXX the subtraction from y below is arbitrary: it simply
+        # looks better positioned this way;
+        #
+        # investigate why is that when you have the time (for now
+        # it is not an issue cause the user will be able to
+        # reposition objects on canvas)
+        y -= height
         ###
-        self.show_message_on_status_bar(report, 2500)
+
+        if chosen_widget_key == 'label':
+
+            # using get_label for the sake of conformity here,
+            # since we could just use QGraphicsScene.addText()
+            # instead
+            get_widget = get_label
+
+        elif chosen_widget_key == 'unchecked_check_box':
+            get_widget = get_unchecked_check_box
+
+        elif chosen_widget_key == 'checked_check_box':
+            get_widget = get_checked_check_box
+
+        widget_proxy = self.addWidget(get_widget())
+        widget_proxy.setPos(x, y)

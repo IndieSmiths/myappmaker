@@ -203,9 +203,8 @@ class StrokesRecordingScene(QGraphicsScene):
         ###
 
         chosen_widget_key = (
-            get_stroke_matches_data(offset_strokes)['chosen_widget_key']
+            get_stroke_matches_data(offset_strokes, always_filter=True)['chosen_widget_key']
         )
-
 
         ### if there's a matching widget and it isn't the current one,
         ### explain to the user that we can't use the drawing because another
