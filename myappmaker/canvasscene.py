@@ -8,11 +8,11 @@ from collections import deque
 
 ## PySide
 
-from PySide6.QtWidgets import QGraphicsScene
+from PySide6.QtWidgets import QGraphicsScene, QMenu
 
 from PySide6.QtGui import QBrush, QPen, QPainterPath
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QPoint
 
 
 ### local imports
@@ -152,7 +152,41 @@ class CanvasScene(QGraphicsScene):
 
         STROKES.clear()
 
-        if match_data['chosen_widget_key']:
+        if match_data['menu_items']:
+            
+            menu = QMenu()
+
+            acs = []
+
+            for dist, widget_key in match_data['menu_items']:
+
+                ac = menu.addAction(f"{dist:.2f} {widget_key}")
+                acs.append(ac)
+
+            ### get position for menu
+
+            union_of_strokes = match_data['union_of_strokes']
+            xs, ys = zip(*union_of_strokes)
+
+            left = min(xs)
+            right = max(xs)
+
+            width = right - left
+
+            top = min(ys)
+            bottom = max(ys)
+
+            height = top - bottom
+
+            x = round(left + width/2)
+            y = round(top + height/2)
+
+            ### TODO improve positioning
+            p = QPoint(x, y)
+
+            print(menu.exec(p))
+
+        elif match_data['chosen_widget_key']:
 
             chosen_widget_key = match_data['chosen_widget_key']
             rounded_hd = round(match_data['hausdorff_distance'])
@@ -208,8 +242,8 @@ class CanvasScene(QGraphicsScene):
             widget_proxy = self.addWidget(get_widget())
             widget_proxy.setPos(x, y)
 
+            self.show_message_on_status_bar(report, 2500)
+
         else:
             report = match_data['report']
-
-        ###
-        self.show_message_on_status_bar(report, 2500)
+            self.show_message_on_status_bar(report, 2500)
