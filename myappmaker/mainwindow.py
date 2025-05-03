@@ -20,7 +20,7 @@ from .appinfo import APP_TITLE, ORG_DIR_NAME, APP_DIR_NAME
 
 from .canvasscene import CanvasScene
 
-from .strokesmgmt.settingsdialog import StrokeSettingsDialog
+from .strokesmgmt.recordingdialog import StrokeRecordingDialog
 
 from .prefsmgmt import PreferencesDialog
 
@@ -46,13 +46,13 @@ class MainWindow(QMainWindow):
 
         ###
 
-        scene = self.scene = CanvasScene(status_bar.showMessage)
+        scene = self.scene = CanvasScene(self, status_bar.showMessage)
         view = self.view = QGraphicsView(scene)
 
         self.setCentralWidget(view)
 
         ###
-        self.stroke_settings_dlg = StrokeSettingsDialog(self)
+        self.stroke_recording_dlg = StrokeRecordingDialog(self)
         self.preferences_dlg = PreferencesDialog(self)
 
         ###
@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
 
         for text, operation in (
             ("Preferences", self.preferences_dlg.exec),
-            ("Stroke settings", self.stroke_settings_dlg.exec),
+            ("(Re)define strokes", self.stroke_recording_dlg.exec),
             ("Clear canvas", self.scene.clear),
         ):
 
