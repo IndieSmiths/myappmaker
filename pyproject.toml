@@ -35,11 +35,11 @@ classifiers = [
 license = { text="Unlicense" }
 
 [project.urls]
-Homepage = "https://indiepython.com/myappmaker"
+Homepage = "https://myappmaker.indiesmiths.com"
 "Source Code" = "https://github.com/IndieSmiths/myappmaker"
 Forum = "https://github.com/IndieSmiths/myappmaker/discussions"
 "Bug Tracker" = "https://github.com/IndieSmiths/myappmaker/issues"
-Funding = "https://indiepython.com/donate"
+Funding = "https://indiesmiths.com/donate"
 
 
 [project.gui-scripts]
