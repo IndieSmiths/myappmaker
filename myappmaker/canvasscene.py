@@ -20,9 +20,9 @@ from PySide6.QtCore import Qt, QPoint
 from .strokesmgmt.utils import get_stroke_matches_data
 
 from .widgets import (
-    get_label,
-    get_unchecked_check_box,
-    get_checked_check_box,
+    LabelItem,
+    UncheckedCheckBoxItem,
+    CheckedCheckBoxItem,
 )
 
 
@@ -238,17 +238,14 @@ class CanvasScene(QGraphicsScene):
         ###
 
         if chosen_widget_key == 'label':
-
-            # using get_label for the sake of conformity here,
-            # since we could just use QGraphicsScene.addText()
-            # instead
-            get_widget = get_label
+            item_class = LabelItem
 
         elif chosen_widget_key == 'unchecked_check_box':
-            get_widget = get_unchecked_check_box
+            item_class = UncheckedCheckBoxItem 
 
         elif chosen_widget_key == 'checked_check_box':
-            get_widget = get_checked_check_box
+            item_class = CheckedCheckBoxItem
 
-        widget_proxy = self.addWidget(get_widget())
-        widget_proxy.setPos(x, y)
+        item = item_class()
+        self.addItem(item)
+        item.setPos(x, y)

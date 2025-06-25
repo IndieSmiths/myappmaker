@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QGraphicsView,
 )
 
-from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QKeySequence, QShortcut, QPainter
 
 from PySide6.QtCore import Qt
 
@@ -48,6 +48,11 @@ class MainWindow(QMainWindow):
 
         scene = self.scene = CanvasScene(self, status_bar.showMessage)
         view = self.view = QGraphicsView(scene)
+
+        view.setRenderHint(QPainter.Antialiasing)
+        view.setOptimizationFlag(
+            QGraphicsView.OptimizationFlag.DontSavePainterState
+        )
 
         self.setCentralWidget(view)
 
