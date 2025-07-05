@@ -25,13 +25,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt, QPointF, QLineF, QRectF, QMarginsF
 
-from PySide6.QtGui import (
-    QPainterPath,
-    QPen,
-    QColorConstants,
-    QFontDatabase,
-    QFont,
-)
+from PySide6.QtGui import QPainterPath, QPen, QColorConstants
 
 
 
@@ -67,21 +61,8 @@ class LabelItem(QGraphicsSimpleTextItem):
 
     def __init__(self):
 
-
         super().__init__()
-        super().setText('This is a label')
-
-        if not hasattr(self, 'my_font'):
-
-            font_id = QFontDatabase.addApplicationFont(
-                'caveat_variable_font_wght.ttf'
-            )
-
-            families = QFontDatabase.applicationFontFamilies(font_id)
-            self.my_font = QFont(families, 32)
-
-        super().setFont(self.my_font)
-
+        super().setText('A label')
 
 
 random_offset = (
