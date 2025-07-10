@@ -1,7 +1,10 @@
 """Facility with canvas to add and organize widgets."""
 
 ### standard library import
+
 from collections import deque
+
+from functools import partial
 
 
 ### third-party imports
@@ -12,7 +15,7 @@ from PySide6.QtWidgets import QGraphicsScene, QMenu
 
 from PySide6.QtGui import QBrush, QPen, QPainterPath, QCursor
 
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, QTimer
 
 
 ### local imports
@@ -45,7 +48,9 @@ class CanvasScene(QGraphicsScene):
         super().__init__(0, 0, *SIZE)
 
         self.cursor = QCursor()
-        self.cursor_offset = QPoint(18, 12)
+
+        self.menu_offset = QPoint(-18, -12)
+        self.cursor_offset = QPoint(30, 0)
 
         self.main_window = main_window
 
@@ -183,10 +188,16 @@ class CanvasScene(QGraphicsScene):
                 action_to_key[ac] = widget_key
 
             ### get position for menu
-            pos = self.cursor.pos() - self.cursor_offset
+
+            cursor_pos = self.cursor.pos()
+
+            menu_pos = cursor_pos + self.menu_offset
+            new_cursor_pos = cursor_pos + self.cursor_offset
+
+            QTimer.singleShot(1, partial(self.cursor.setPos, new_cursor_pos))
 
             ###
-            chosen_action = menu.exec(pos, first_action)
+            chosen_action = menu.exec(menu_pos, first_action)
 
             if chosen_action is None:
 
