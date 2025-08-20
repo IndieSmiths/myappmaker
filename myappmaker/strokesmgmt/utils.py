@@ -143,7 +143,7 @@ def get_stroke_matches_data(strokes, always_filter=False):
 
         union_of_strokes = sum(strokes, [])
 
-        match_data['union_of_strokes'] = union_of_strokes
+        match_data['union_bounding_box'] = LineString(union_of_strokes).bounds
 
         your_ratios_logs = get_strokes_ratios_logs(union_of_strokes, strokes)
 

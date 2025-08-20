@@ -230,17 +230,9 @@ class CanvasScene(QGraphicsScene):
 
         ### get position for widget
 
-        union_of_strokes = match_data['union_of_strokes']
-        xs, ys = zip(*union_of_strokes)
-
-        left = min(xs)
-        right = max(xs)
+        left, top, right, bottom = match_data['union_bounding_box']
 
         width = right - left
-
-        top = min(ys)
-        bottom = max(ys)
-
         height = bottom - top
 
         x = left + width/2
