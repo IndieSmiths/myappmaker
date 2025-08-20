@@ -156,6 +156,13 @@ class CanvasScene(QGraphicsScene):
 
         del self.path, self.path_proxy
 
+        ### only proceed if STROKES have at least 2 points
+
+        if any(len(stroke) < 2 for stroke in STROKES):
+
+            STROKES.clear()
+            return
+
         ### check list of strokes for matches
 
         match_data = get_stroke_matches_data(STROKES)
