@@ -175,13 +175,13 @@ myappmaker's source is dedicated to the public domain with [The Unlicense][].
 [Bluesky]: https://bsky.app/profile/kennedyrichard.com
 [Twitter/X]: https://x.com/KennedyRichard
 [email]: mailto:kennedy@kennedyrichard.com
-[discord server]: https://indiepython.com/discord
+[discord server]: https://indiesmiths.com/discord
 
 [patreon]: https://patreon.com/KennedyRichard
 [GitHub sponsors]: https://github.com/sponsors/KennedyRichard
 [liberapay]: https://liberapay.com/KennedyRichard
 [Ko-fi]: https://ko-fi.com/kennedyrichard
-[donation page]: https://indiepython.com/donate
+[donation page]: https://indiesmiths.com/donate
 
 [GitHub issues]: https://github.com/IndiePython/nodezator/issues
 [GitHub discussions]: https://github.com/IndiePython/nodezator/discussions
