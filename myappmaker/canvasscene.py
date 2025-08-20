@@ -210,7 +210,7 @@ class CanvasScene(QGraphicsScene):
 
         elif chosen_widget_key:
 
-            rounded_hd = round(match_data['hausdorff_distance'])
+            rounded_hd = round(match_data['sym_hausdorff_dist'])
             no_of_widgets = match_data['no_of_widgets']
 
             report = (

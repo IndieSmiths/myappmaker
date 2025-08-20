@@ -31,7 +31,7 @@ To launch and use myappmaker you can either install it with `pip` or you can jus
 
 ### Installing myappmaker with pip
 
-If you want to install it, just execute the command below. It will install myappmaker and also, if not available yet, [PySide6][], [numpy][] and [scipy][].
+If you want to install it, just execute the command below. It will install myappmaker and also, if not available yet, [PySide6][], [shapely][] and [numpy][] (more precisely, shapely installs numpy automatically).
 
 ```
 pip install --upgrade myappmaker
@@ -46,7 +46,7 @@ If everything goes well, after installing you should be able to launch the app b
 
 If you want to use myappmaker without installing it, you'll need 02 things:
 
-- to have Python installed in your system along with [PySide6][], [numpy][] and [scipy][];
+- to have Python installed in your system along with [PySide6][], [shapely][] and [numpy][] (shapely automatically installs numpy for you);
 - to download myappmaker's source (the `myappmaker` folder in the top level of this repository).
 
 Then, to launch the app, you just need to go to the location where you put the `myappmaker` folder containing the source (not inside it), open the command line and run `python -m myappmaker` or `python3 -m myappmaker`, depending on your system.
@@ -189,5 +189,5 @@ myappmaker's source is dedicated to the public domain with [The Unlicense][].
 [The Unlicense]: https://unlicense.org/
 
 [PySide6]: https://doc.qt.io/qtforpython-6/
+[shapely]: https://shapely.readthedocs.io/
 [numpy]: https://numpy.org
-[scipy]: https://scipy.org

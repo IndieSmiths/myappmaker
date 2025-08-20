@@ -3,8 +3,7 @@ name = "myappmaker"
 dynamic = ["version"]
 dependencies = [
     "pyside6",
-    "numpy",
-    "scipy",
+    "shapely",
 ]
 authors = [
   { name="Kennedy Richard", email="kennedy@kennedyrichard.com" },

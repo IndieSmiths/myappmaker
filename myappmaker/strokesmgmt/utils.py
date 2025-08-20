@@ -11,10 +11,8 @@ from contextlib import suppress
 
 
 ### third-party imports
+from shapely import LineString, hausdorff_distance
 
-from numpy import array as numpy_array
-
-from scipy.spatial.distance import directed_hausdorff
 
 ### local imports
 from ..prefsmgmt import PREFERENCES, PreferencesKeys
@@ -43,10 +41,10 @@ def update_strokes_map(widget_key, strokes):
     ratios_logs = get_strokes_ratios_logs(union_of_strokes, strokes)
 
     ### get offset union for easier comparison
-    offset_union_array = get_offset_union_array(union_of_strokes)
+    offset_union_linestring = get_offset_union_line_string(union_of_strokes)
 
     ###
-    STROKES_MAP[no_of_strokes][widget_key] = (ratios_logs, offset_union_array)
+    STROKES_MAP[no_of_strokes][widget_key] = (ratios_logs, offset_union_linestring)
 
 
 def get_strokes_ratios_logs(union_of_strokes, strokes):
@@ -113,10 +111,10 @@ def get_strokes_ratios_logs(union_of_strokes, strokes):
     return tuple(ratios_logs)
 
 
-def get_offset_union_array(union_of_strokes):
-    """Yield offset strokes so 1st point in 1st stroke is at origin.
+def get_offset_union_line_string(union_of_strokes):
+    """Return offset union so 1st point in 1st stroke is at origin.
 
-    Moved strokes are yielded as numpy arrays.
+    It is returned as a LineString.
     """
 
     ### coordinates of first point from first stroke
@@ -124,7 +122,7 @@ def get_offset_union_array(union_of_strokes):
 
     ### offset all points in all strokes ac
 
-    return numpy_array(
+    return LineString(
 
         [
             (a - x_offset, b - y_offset)
@@ -151,7 +149,7 @@ def get_stroke_matches_data(strokes, always_filter=False):
 
         your_ratios_logs = get_strokes_ratios_logs(union_of_strokes, strokes)
 
-        your_union_array = get_offset_union_array(union_of_strokes)
+        your_union_ls = get_offset_union_line_string(union_of_strokes)
 
         ### if the 'always_filter' flag is off, we check whether
         ### the user asked us to show a widget menu after drawing;
@@ -178,8 +176,8 @@ def get_stroke_matches_data(strokes, always_filter=False):
                     ## symmetric Hausdorff distance
 
                     max(
-                        directed_hausdorff(your_union_array, widget_union_array)[0],
-                        directed_hausdorff(widget_union_array, your_union_array)[0],
+                        hausdorff_distance(your_union_ls, widget_union_ls),
+                        hausdorff_distance(widget_union_ls, your_union_ls),
                     ),
 
                     ## widget key
@@ -189,7 +187,7 @@ def get_stroke_matches_data(strokes, always_filter=False):
 
                 ### source
 
-                for widget_key, (widget_ratios_logs, widget_union_array)
+                for widget_key, (widget_ratios_logs, widget_union_ls)
                 in possible_matches.items()
 
                 ## filtering (or not)
@@ -226,19 +224,19 @@ def get_stroke_matches_data(strokes, always_filter=False):
 
             if hdist_widget_key_pairs:
 
-                hausdorff_distance, chosen_widget_key = hdist_widget_key_pairs[0]
+                sym_hausdorff_dist, chosen_widget_key = hdist_widget_key_pairs[0]
                 match_data['no_of_widgets'] = len(possible_matches)
 
                 hausdorff_tolerance = PREFERENCES[
                     PreferencesKeys.MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE.value
                 ]
 
-                if hausdorff_distance < hausdorff_tolerance:
+                if sym_hausdorff_dist < hausdorff_tolerance:
 
                     report = 'match'
 
                     match_data['chosen_widget_key'] = chosen_widget_key
-                    match_data['hausdorff_distance'] = hausdorff_distance
+                    match_data['sym_hausdorff_dist'] = sym_hausdorff_dist
 
                 else:
                     report += " (hausdorff distance too large)"
