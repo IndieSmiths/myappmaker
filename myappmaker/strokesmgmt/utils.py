@@ -11,7 +11,10 @@ from contextlib import suppress
 
 
 ### third-party imports
+
 from shapely import LineString, hausdorff_distance
+
+from shapely.affinity import translate, scale
 
 
 ### local imports
@@ -43,9 +46,16 @@ def update_strokes_map(widget_key, strokes):
     ### get offset union for easier comparison
     offset_union_linestring = get_offset_union_line_string(union_of_strokes)
 
-    ###
-    STROKES_MAP[no_of_strokes][widget_key] = (ratios_logs, offset_union_linestring)
+    ### get size of line string bounding box
+    size = get_linestring_size(offset_union_linestring)
 
+    ###
+    STROKES_MAP[no_of_strokes][widget_key] = (ratios_logs, offset_union_linestring, size)
+
+def get_linestring_size(linestring):
+    """Return size of linestring bounding box."""
+    left, top, right, bottom = linestring.bounds
+    return (right - left, bottom - top)
 
 def get_strokes_ratios_logs(union_of_strokes, strokes):
     """Return tuple w/ ln of width:height ratios.
@@ -116,20 +126,8 @@ def get_offset_union_line_string(union_of_strokes):
 
     It is returned as a LineString.
     """
-
-    ### coordinates of first point from first stroke
-    x_offset, y_offset = union_of_strokes[0]
-
-    ### offset all points in all strokes ac
-
-    return LineString(
-
-        [
-            (a - x_offset, b - y_offset)
-            for a, b in union_of_strokes
-        ]
-
-    )
+    x, y = union_of_strokes[0]
+    return translate(LineString(union_of_strokes), xoff=-x, yoff=-y)
 
 
 def get_stroke_matches_data(strokes, always_filter=False):
@@ -150,6 +148,8 @@ def get_stroke_matches_data(strokes, always_filter=False):
         your_ratios_logs = get_strokes_ratios_logs(union_of_strokes, strokes)
 
         your_union_ls = get_offset_union_line_string(union_of_strokes)
+
+        your_union_ls_size = get_linestring_size(your_union_ls)
 
         ### if the 'always_filter' flag is off, we check whether
         ### the user asked us to show a widget menu after drawing;
@@ -175,9 +175,11 @@ def get_stroke_matches_data(strokes, always_filter=False):
 
                     ## symmetric Hausdorff distance
 
-                    max(
-                        hausdorff_distance(your_union_ls, widget_union_ls),
-                        hausdorff_distance(widget_union_ls, your_union_ls),
+                    get_scaled_symmetric_hausdorff(
+                        your_union_ls,
+                        your_union_ls_size,
+                        widget_union_ls,
+                        widget_union_ls_size,
                     ),
 
                     ## widget key
@@ -187,7 +189,7 @@ def get_stroke_matches_data(strokes, always_filter=False):
 
                 ### source
 
-                for widget_key, (widget_ratios_logs, widget_union_ls)
+                for widget_key, (widget_ratios_logs, widget_union_ls, widget_union_ls_size)
                 in possible_matches.items()
 
                 ## filtering (or not)
@@ -250,3 +252,37 @@ def get_stroke_matches_data(strokes, always_filter=False):
     match_data['report'] = report
 
     return match_data
+
+
+def get_scaled_symmetric_hausdorff(
+    your_ls,
+    your_ls_size,
+    widget_ls,
+    widget_ls_size,
+):
+    """Return symmetric Hausdorff of linestrings after resizing first one.
+
+    That is, after resizing the first one to match the size of the second one.
+    """
+
+    your_width, your_height = your_ls_size
+    widget_width, widget_height = widget_ls_size
+
+    your_to_widget_width_factor = widget_width / your_width 
+    your_to_widget_height_factor = widget_height / your_height
+
+    your_resized_ls = scale(
+        your_ls,
+        xfact=your_to_widget_width_factor,
+        yfact=your_to_widget_height_factor,
+        origin=(0, 0), # see comment below
+    )
+
+    # origin of scale is always (0, 0) because both linestrings are
+    # offset so their first point is at (0, 0) coordinates (that is,
+    # the linestrings are aligned at that point)
+
+    return float(max(
+        hausdorff_distance(your_resized_ls, widget_ls),
+        hausdorff_distance(widget_ls, your_resized_ls),
+    ))
