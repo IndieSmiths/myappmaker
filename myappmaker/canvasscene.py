@@ -241,19 +241,10 @@ class CanvasScene(QGraphicsScene):
         top = min(ys)
         bottom = max(ys)
 
-        height = top - bottom
+        height = bottom - top
 
         x = left + width/2
         y = top + height/2
-
-        # XXX the subtraction from y below is arbitrary: it simply
-        # looks better positioned this way;
-        #
-        # investigate why is that when you have the time (for now
-        # it is not an issue cause the user will be able to
-        # reposition objects on canvas)
-        y -= height
-        ###
 
         if chosen_widget_key == 'label':
             item_class = LabelItem
