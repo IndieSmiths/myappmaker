@@ -59,7 +59,7 @@ def get_label():
 
 class LabelItem(QGraphicsSimpleTextItem):
 
-    def __init__(self):
+    def __init__(self, size=(0, 0)):
 
         super().__init__()
         super().setText('A label')
@@ -71,13 +71,13 @@ random_offset = (
 
 class CheckBoxItem(QGraphicsItem):
 
-    def __init__(self, checked=False):
+    def __init__(self, checked=False, size=(0, 0)):
 
         super().__init__()
 
         self.paint = self.draw_checked if checked else self.draw_unchecked
 
-        self.create_drawing_paths()
+        self.create_drawing_paths(size)
 
         box_pen = self.box_pen = QPen()
         box_pen.setStyle(Qt.SolidLine)
@@ -89,9 +89,11 @@ class CheckBoxItem(QGraphicsItem):
         tick_pen.setColor(QColorConstants.Svg.blue)
         tick_pen.setWidth(10)
 
-    def create_drawing_paths(self):
+    def create_drawing_paths(self, size):
+        
+        width = height = size[0]
 
-        box_area = QRectF(0, 0, 50, 50)
+        box_area = QRectF(0, 0, width, height)
 
         control_margin = 6
         control_area = (
@@ -128,7 +130,14 @@ class CheckBoxItem(QGraphicsItem):
 
         mid_point = box_path_br.center() + random_offset(4)
 
-        tick_area = QRectF(0, 0, 60, 80)
+        width *= 1.2
+        width = int(width)
+
+        height *= 1.4
+        height = int(height)
+
+        tick_area = QRectF(0, 0, width, height)
+
         tick_area.moveCenter(box_area.center())
 
         tick_path = self.tick_path = QPainterPath()
