@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt, QPointF, QLineF, QRectF, QMarginsF
 
-from PySide6.QtGui import QPainterPath, QPen, QColorConstants
+from PySide6.QtGui import QPainterPath, QPen, QColorConstants, QFont
 
 
 
@@ -58,11 +58,34 @@ def get_label():
 
 
 class LabelItem(QGraphicsSimpleTextItem):
+    
+    fonts = {}
 
-    def __init__(self, size=(0, 0)):
+    def __init__(self, size=(30, 30)):
 
         super().__init__()
+        self.pick_font(size)
+
         super().setText('A label')
+
+    def pick_font(self, size):
+
+        height = size[1]
+        height *= .7
+        height = round(height)
+
+        if height not in self.fonts:
+
+            f = QFont()
+            f.setStyleHint(QFont.StyleHint.Cursive)
+            f.setPointSize(height)
+            self.fonts[height] = f
+
+        super().setFont(self.fonts[height])
+
+    @staticmethod
+    def adjust_pos(x, y, width, height):
+        return (x - (width * .5), y - (height * .7))
 
 
 random_offset = (
@@ -190,6 +213,10 @@ class CheckBoxItem(QGraphicsItem):
         painter.drawPath(self.box_path)
         painter.setPen(self.tick_pen)
         painter.drawPath(self.tick_path)
+
+    @staticmethod
+    def adjust_pos(x, y, width, height):
+        return (x - width/2, y - height/2)
 
 
 UncheckedCheckBoxItem = partial(CheckBoxItem, False)

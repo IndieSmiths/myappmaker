@@ -238,15 +238,6 @@ class CanvasScene(QGraphicsScene):
         x = left + width/2
         y = top + height/2
 
-        # XXX
-        # the adjustments to x and y below are arbitrary and subjective;
-        # widget just seems better positioned after such adjustments;
-        #
-        # it is better to replace this in the future by code supported
-        # by factual data and sound reasoning
-        x += -(width * .5)
-        y += -(height * .5)
-
         # get size for widget
         size = (width, height)
 
@@ -261,6 +252,9 @@ class CanvasScene(QGraphicsScene):
         elif chosen_widget_key == 'checked_check_box':
             item_class = CheckedCheckBoxItem
 
+
         item = item_class(size)
         self.addItem(item)
+
+        x, y = item.adjust_pos(x, y, width, height)
         item.setPos(x, y)
