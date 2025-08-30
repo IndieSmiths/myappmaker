@@ -16,7 +16,10 @@ from PySide6.QtWidgets import (
 
     QLabel,
     QCheckBox,
+    QLineEdit,
     QGraphicsItem,
+    QGraphicsItemGroup,
+    QGraphicsRectItem,
     QGraphicsSimpleTextItem,
 
     QSizePolicy,
@@ -53,6 +56,10 @@ def get_label():
     label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
     return label
 
+def get_line_edit():
+    line_edit = QLineEdit('A line edit')
+    line_edit.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+    return line_edit
 
 ### custom items representing widgets
 
@@ -221,3 +228,54 @@ class CheckBoxItem(QGraphicsItem):
 
 UncheckedCheckBoxItem = partial(CheckBoxItem, False)
 CheckedCheckBoxItem = partial(CheckBoxItem, True)
+
+
+class LineEditItem(QGraphicsItemGroup):
+
+    fonts = {}
+
+    def __init__(self, size=(80, 30)):
+
+        super().__init__()
+
+        self.text_item = QGraphicsSimpleTextItem()
+        self.pick_font(tuple(i - 5 for i in size))
+        self.text_item.setText('A line edit')
+
+        self.addToGroup(self.text_item)
+
+        width, height = self.text_item.boundingRect().size().toTuple()
+
+        ###
+
+        outline_pen = QPen()
+        outline_pen.setStyle(Qt.SolidLine)
+        outline_pen.setColor(QColorConstants.Svg.black)
+        outline_pen.setWidth(4)
+
+        self.outline_rect = QGraphicsRectItem(0, 0, width+20, height+10)
+        self.outline_rect.setPen(outline_pen)
+        self.outline_rect.setBrush(Qt.NoBrush)
+
+        self.addToGroup(self.outline_rect)
+
+        self.text_item.setPos(10, 5)
+
+    def pick_font(self, size):
+
+        height = size[1]
+        height *= .4
+        height = round(height)
+
+        if height not in self.fonts:
+
+            f = QFont()
+            f.setStyleHint(QFont.StyleHint.Cursive)
+            f.setPointSize(height)
+            self.fonts[height] = f
+
+        self.text_item.setFont(self.fonts[height])
+
+    @staticmethod
+    def adjust_pos(x, y, width, height):
+        return (x - (width * .5), y - (height * .7))

@@ -26,6 +26,7 @@ from .widgets import (
     LabelItem,
     UncheckedCheckBoxItem,
     CheckedCheckBoxItem,
+    LineEditItem,
 )
 
 
@@ -251,6 +252,9 @@ class CanvasScene(QGraphicsScene):
 
         elif chosen_widget_key == 'checked_check_box':
             item_class = CheckedCheckBoxItem
+
+        elif chosen_widget_key == 'line_edit':
+            item_class = LineEditItem
 
 
         item = item_class(size)

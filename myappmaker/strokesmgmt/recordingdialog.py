@@ -27,6 +27,7 @@ from ..widgets import (
     get_checked_check_box,
     get_unchecked_check_box,
     get_label,
+    get_line_edit,
 )
 
 from .recordingpanel import StrokesRecordingPanel
@@ -92,6 +93,7 @@ class StrokeRecordingDialog(QDialog):
             ('label', get_label),
             ('unchecked_check_box', get_unchecked_check_box),
             ('checked_check_box', get_checked_check_box),
+            ('line_edit', get_line_edit),
 
         ):
 
