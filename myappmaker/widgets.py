@@ -17,9 +17,11 @@ from PySide6.QtWidgets import (
     QLabel,
     QCheckBox,
     QLineEdit,
+    QPushButton,
     QGraphicsItem,
     QGraphicsItemGroup,
     QGraphicsRectItem,
+    QGraphicsLineItem,
     QGraphicsSimpleTextItem,
 
     QSizePolicy,
@@ -28,7 +30,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt, QPointF, QLineF, QRectF, QMarginsF
 
-from PySide6.QtGui import QPainterPath, QPen, QColorConstants, QFont
+from PySide6.QtGui import QPainterPath, QPen, QBrush, QColorConstants, QFont
 
 
 
@@ -60,6 +62,11 @@ def get_line_edit():
     line_edit = QLineEdit('A line edit')
     line_edit.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
     return line_edit
+
+def get_button():
+    button = QPushButton('A button')
+    button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+    return button
 
 ### custom items representing widgets
 
@@ -259,6 +266,87 @@ class LineEditItem(QGraphicsItemGroup):
 
         self.addToGroup(self.outline_rect)
 
+        self.text_item.setPos(10, 5)
+
+    def pick_font(self, size):
+
+        height = size[1]
+        height *= .4
+        height = round(height)
+
+        if height not in self.fonts:
+
+            f = QFont()
+            f.setStyleHint(QFont.StyleHint.Cursive)
+            f.setPointSize(height)
+            self.fonts[height] = f
+
+        self.text_item.setFont(self.fonts[height])
+
+    @staticmethod
+    def adjust_pos(x, y, width, height):
+        return (x - (width * .5), y - (height * .7))
+
+
+class ButtonItem(QGraphicsItemGroup):
+
+    fonts = {}
+
+    def __init__(self, size=(80, 30)):
+
+        super().__init__()
+
+        self.text_item = QGraphicsSimpleTextItem()
+        self.pick_font(tuple(i - 5 for i in size))
+        self.text_item.setText('A button')
+
+        width, height = self.text_item.boundingRect().size().toTuple()
+
+        ###
+
+        background_brush = QBrush()
+        background_brush.setStyle(Qt.SolidPattern)
+        background_brush.setColor(QColorConstants.Svg.silver)
+
+        self.outline_rect_item = QGraphicsRectItem(0, 0, width+20, height+10)
+        self.outline_rect_item.setPen(Qt.NoPen)
+        self.outline_rect_item.setBrush(background_brush)
+
+        self.addToGroup(self.outline_rect_item)
+
+        ###
+
+        in_pen = QPen()
+        in_pen.setStyle(Qt.SolidLine)
+        in_pen.setColor(QColorConstants.Svg.lightgrey)
+        in_pen.setWidth(4)
+
+        out_pen = QPen()
+        out_pen.setStyle(Qt.SolidLine)
+        out_pen.setColor(QColorConstants.Svg.darkgrey)
+        out_pen.setWidth(4)
+
+        out_rect = self.outline_rect_item.rect()
+
+        p1 = out_rect.bottomLeft()
+        p3 = out_rect.topRight()
+
+        for attr_name, pen in (
+            ('bottomRight', out_pen),
+            ('topLeft', in_pen),
+        ):
+
+            p2 = getattr(out_rect, attr_name)()
+
+            for p in (p1, p3):
+
+                lineitem = QGraphicsLineItem(QLineF(p, p2))
+                lineitem.setPen(pen)
+                self.addToGroup(lineitem)
+
+        ###
+
+        self.addToGroup(self.text_item)
         self.text_item.setPos(10, 5)
 
     def pick_font(self, size):
