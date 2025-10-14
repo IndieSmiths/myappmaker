@@ -1,4 +1,4 @@
-"""Facility with canvas to record strokes."""
+"""Facility with canvas (scene) to record strokes."""
 
 ### standard library import
 from collections import deque
@@ -44,26 +44,38 @@ STROKE_PATH_PROXIES = []
 ### class definition
 
 class StrokesRecordingScene(QGraphicsScene):
+    """Scene used to record strokes drawn by user."""
 
     def __init__(self, recording_panel):
+        """Initialize superclass and setup contents."""
 
+        ### initialize superclass, defining a fixed size
+        ### it (which helps with performance)
         super().__init__(0, 0, *STROKE_SIZE)
 
-        ###
+        ### store given reference to recording panel
         self.recording_panel = recording_panel
 
-        ###
-
+        ### fill scene with white
         self.setBackgroundBrush(Qt.white)
 
+        ### define and add perpendicular dashed lines that
+        ### cross at the middle of the scene, just so they
+        ### can be used as drawing guides;
         ###
+        ### we don't store references to those lines because
+        ### we won't need to manipulate them anymore
+
+        ## pen for dashed lines
 
         dash_pen = QPen()
         dash_pen.setWidth(2)
         dash_pen.setStyle(Qt.DashLine)
         dash_pen.setColor(LIGHT_GREY_QCOLOR)
 
-        hline = (
+        ## horizontal line
+
+        horizontal_line = (
 
             QLine(
                 0,
@@ -74,9 +86,11 @@ class StrokesRecordingScene(QGraphicsScene):
 
         )
 
-        self.hline_proxy = self.addLine(hline, dash_pen)
+        self.addLine(horizontal_line, dash_pen)
 
-        vline = (
+        ## vertical line
+
+        vertical_line = (
 
             QLine(
                 STROKE_HALF_DIMENSION,
@@ -87,20 +101,30 @@ class StrokesRecordingScene(QGraphicsScene):
 
         )
 
-        self.vline_proxy = self.addLine(vline, dash_pen)
+        self.addLine(vertical_line, dash_pen)
 
-        ###
+        ### define and store pen for strokes
 
         self.strokes_pen = QPen(Qt.red)
         self.strokes_pen.setWidth(3)
 
-        ###
+        ### create placeholder and flag attributes to assist in this
+        ### widget's recording operations
+
         self.last_point = None
         self.watch_out_for_shift_release = False
 
     def mouseMoveEvent(self, event):
+        """Respond to mouse movement if meaningful to widget's purpose.
+
+        The movement is meaningful only if both mouse left button and shift
+        key are pressed, in which case we make a series of setups to either
+        start or keep recording a drawing (if we already started it
+        previously).
+        """
 
         ### leave right away if either...
+        ###
         ### - mouse left button is NOT pressed
         ### - shift key is NOT pressed
 
@@ -110,7 +134,8 @@ class StrokesRecordingScene(QGraphicsScene):
         ):
             return
 
-        ###
+        ### turn on the flag that indicates we must watch out for the release
+        ### of the shift key
         self.watch_out_for_shift_release = True
 
         ### grab/reference points locally
@@ -118,11 +143,8 @@ class StrokesRecordingScene(QGraphicsScene):
         point = event.scenePos()
         last_point = self.last_point
 
-        ### get tuple of coordinates from current point
-        coords = point.x(), point.y()
-
         ### if there's no last point, it means the user just began drawing a
-        ### stroke
+        ### stroke, so create and store path
 
         if last_point is None:
 
@@ -133,11 +155,11 @@ class StrokesRecordingScene(QGraphicsScene):
 
             ### move path to current point and store such point as last one
 
-            path.moveTo(*coords)
+            path.moveTo(point)
             self.last_point = point
 
-            ### store coordinates in new list within STROKES
-            STROKES.append([coords])
+            ### store 2-tuple of coordinates in new list within STROKES
+            STROKES.append([point.toTuple()])
 
             ### store path proxy
             STROKE_PATH_PROXIES.append(self.path_proxy)
@@ -146,27 +168,31 @@ class StrokesRecordingScene(QGraphicsScene):
             return
 
         ### if the points are too close, leave as well
+
         if (last_point - point).manhattanLength() <= 3:
             return
 
 
-        ### otherwise, draw a line on our board and update its
-        ### QGraphics proxy
+        ### otherwise, draw a line on our path and update its QGraphics proxy
 
         self.path.lineTo(point.x(), point.y())
         self.path_proxy.setPath(self.path)
 
-        ### store coordinates
-        STROKES[-1].append(coords)
+        ### append 2-tuple of coordinates in last stroke in the list
+        STROKES[-1].append(point.toTuple())
 
         ### reference current point as last one
         self.last_point = point
 
-
     def mouseReleaseEvent(self, event):
+        """Set last_point to None."""
         self.last_point = None
 
     def keyReleaseEvent(self, event):
+        """Process strokes if shift key is released while watching out for it.
+
+        We watch out for shift key's release when we are drawing.
+        """
 
         if (
             event.key() == Qt.Key.Key_Shift
@@ -177,8 +203,9 @@ class StrokesRecordingScene(QGraphicsScene):
             self.process_strokes()
 
     def process_strokes(self):
+        """Process drawing (its strokes) to associate it with widgets."""
 
-        ### remove path proxies
+        ### remove path proxies (proxies added when drawing)
 
         for item in STROKE_PATH_PROXIES:
             self.removeItem(item)
@@ -186,6 +213,8 @@ class StrokesRecordingScene(QGraphicsScene):
         STROKE_PATH_PROXIES.clear()
 
         del self.path, self.path_proxy
+
+        ### offset strokes so they are centered on the origin (0, 0)
 
         offset_strokes = []
 
@@ -200,19 +229,25 @@ class StrokesRecordingScene(QGraphicsScene):
 
             offset_strokes.append(offset_points)
 
-        ###
+        ### abort saving strokes if it is already similar enough with an existing
+        ### drawing
+
+        ## using the strokes, try getting best match among existing drawing
 
         chosen_widget_key = (
-            get_stroke_matches_data(offset_strokes, always_filter=True)['chosen_widget_key']
+            get_stroke_matches_data(
+                offset_strokes,
+                always_filter=True,
+            )['chosen_widget_key']
         )
 
-        ### if there's a matching widget and it isn't the current one,
-        ### explain to the user that we can't use the drawing because another
-        ### widget is already using it
+        ## if there's a matching widget and it isn't the current one,
+        ## explain to the user that we can't use the drawing because another
+        ## widget is already using it
 
         if (
             chosen_widget_key
-            and chosen_widget_key != self.stroke_display.widget_key
+            and chosen_widget_key != self.display_panel.widget_key
         ):
 
             QMessageBox.information(
@@ -224,26 +259,45 @@ class StrokesRecordingScene(QGraphicsScene):
                 ),
             )
 
-        ### otherwise, the new drawing can be set without problems
+        ### otherwise, the new drawing can be set without problems;
+        ###
+        ### note that this new strokes may still have matched the pre-existing
+        ### strokes for this widget we are associating with the new strokes;
+        ### there is no problem, as this case serves as a way for the user
+        ### to update the drawing; of course, the user might stil be doing that
+        ### inadvertently, but in the end it is harmless because the strokes
+        ### will simply be replace by a set of strokes that also matches the
+        ### original strokes used; in other words, it is practically the same
+        ### drawing anyway
 
         else:
-            self.stroke_display.update_and_save_strokes(offset_strokes)
+            self.display_panel.update_and_save_strokes(offset_strokes)
 
 
 
 class StrokesRecordingPanel(QWidget):
+    """Panel to hold the view and associated scene for recording strokes."""
 
     def __init__(self, parent=None):
+        """Initialize superclass and setup contents."""
 
+        ### initialize superclass
         super().__init__()
+
+        ### instantiate and store custom scene and standard view,
+        ### associating them
 
         scene = self.scene = StrokesRecordingScene(self)
         self.view = QGraphicsView(scene)
+
+        ### create and setup layout for this widget, adding the
+        ### view to it
 
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         layout.setSizeConstraint(QLayout.SetFixedSize)
         self.setLayout(layout)
 
-    def prepare(self, stroke_display):
-        self.scene.stroke_display = stroke_display
+    def reference_display_panel(self, display_panel):
+        """Store a reference to the display panel in the scene."""
+        self.scene.display_panel = display_panel

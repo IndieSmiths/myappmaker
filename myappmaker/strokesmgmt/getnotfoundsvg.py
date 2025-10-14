@@ -1,11 +1,10 @@
-"""Tools to generate surfaces through drawing/blitting."""
+"""Tools to generate SVG text defining a "not found" icon."""
 
 ### standard library import
 from math import sqrt
 
 
 ### third-party imports
-
 from PySide6.QtCore import QPointF, QRect, QMargins
 
 

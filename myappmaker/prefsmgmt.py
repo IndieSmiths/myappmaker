@@ -36,6 +36,8 @@ from .ourstdlibs.pyl import load_pyl, save_pyl
 
 @unique
 class PreferencesKeys(Enum):
+    """Enum defining dictionary keys representing preference settings."""
+
     SHOW_WIDGET_MENU_AFTER_DRAWING = 'show_widget_menu_after_drawing'
     RATIO_LOG_DIFF_TOLERANCE = 'ratio_log_diff_tolerance'
     MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE = (
@@ -59,30 +61,35 @@ format_ratio_log_diff = "{:.2f}".format
 ### dialog definition
 
 class PreferencesDialog(QDialog):
+    """Dialog used for changing preferences."""
 
     def __init__(self, parent=None):
+        """Initialize superclass and setup widgets."""
 
+        ### initialize superclass
         super().__init__(parent)
 
+        ### set title for dialog's window
         self.setWindowTitle('Preferences')
 
-        ###
+        ### create and store maps to assist in operations
+
         self.widget_map = {}
         self.widget_setter = {}
         self.slider_label_map = {}
 
-        ###
+        ### make sure preferences are ready to be read/changed
         prepare_preferences()
 
-        ###
+        ### create and populate grid layout
 
         grid = self.grid = QGridLayout()
 
-        ### define captions, labels and widgets
+        ## define and add caption labels
 
         row = 0
 
-        ## caption labels
+        # define
 
         preference_lbl = QLabel("Preference")
         value_lbl = QLabel("Value")
@@ -90,7 +97,7 @@ class PreferencesDialog(QDialog):
         preference_lbl.setStyleSheet(BOLD_TEXT_CSS)
         value_lbl.setStyleSheet(BOLD_TEXT_CSS)
 
-        ## add caption labels
+        # add
 
         label_alignment = (
             Qt.AlignmentFlag.AlignRight
@@ -102,15 +109,18 @@ class PreferencesDialog(QDialog):
         grid.addWidget(preference_lbl, row, 0, label_alignment)
         grid.addWidget(value_lbl, row, 1, widget_alignment)
 
-        ### add label/widget pairs for each preference
 
-        ## SHOW_WIDGET_MENU_AFTER_DRAWING
+        ## add label/widget pairs for each preference
+
+        # widgets for SHOW_WIDGET_MENU_AFTER_DRAWING key
 
         row += 1
 
         key = PreferencesKeys.SHOW_WIDGET_MENU_AFTER_DRAWING.value
 
-        btn = get_button_like_label("Show widget menu after drawing")
+        btn = QPushButton("Show widget menu after drawing")
+
+        style_button_like_label(btn)
 
         btn.setToolTip(
             "When enabled (default): after drawing, instead of automatically"
@@ -131,7 +141,7 @@ class PreferencesDialog(QDialog):
 
         grid.addWidget(check, row, 1, widget_alignment)
 
-        ## RATIO_LOG_DIFF_TOLERANCE
+        # widgets for RATIO_LOG_DIFF_TOLERANCE key
 
         row += 1
 
@@ -164,7 +174,7 @@ class PreferencesDialog(QDialog):
         grid.addWidget(ratio_sld, row, 1, widget_alignment)
         grid.addWidget(sld_label, row, 2, widget_alignment)
 
-        ## MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE
+        # widgets for MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE key
 
         row += 1
 
@@ -198,7 +208,7 @@ class PreferencesDialog(QDialog):
         grid.addWidget(distance_sld, row, 1, widget_alignment)
         grid.addWidget(sld_label, row, 2, widget_alignment)
 
-        ### Close/Set Default buttons
+        ### create and add "Close" and "Set Default" buttons
 
         row += 1
 
@@ -211,16 +221,20 @@ class PreferencesDialog(QDialog):
         grid.addWidget(defaults_btn, row, 0)
         grid.addWidget(close_btn, row, 1)
 
-        ###
+        ### flag to indicate when restoring defaults
         self.restoring_defaults = False
 
-        ###
+        ### finally set grid as teh layout for this dialog
         self.setLayout(self.grid)
 
     def update_show_widget_menu(self, state):
+        """Update preference referring to usage of a widget menu."""
 
+        ### if restoring defaults, exit method earlier
         if self.restoring_defaults:
             return
+
+        ### otherwise, define value based on given state
 
         if state == Qt.CheckState.Checked:
             value = True
@@ -228,21 +242,30 @@ class PreferencesDialog(QDialog):
         elif state == Qt.CheckState.Unchecked:
             value = False
 
+        ### but also watch out for invalid state (error)
+
         else:
 
             raise RuntimeError(
                 "Checkbox shouldn't have a state other than Checked/Unchecked"
             )
 
+        ### reaching this point, mean we have a valid state (value), so we
+        ### update the preference's file
+
         PREFERENCES[
             PreferencesKeys.SHOW_WIDGET_MENU_AFTER_DRAWING.value
         ] = value
 
         try: save_pyl(PREFERENCES, PREFERENCES_FILEPATH)
+
+        ### again, while watching out for errors
+
         except Exception as err:
             print(f"Failed to save preferences: {err}")
 
     def toggle_preference(self, key):
+        """Toggle preference related to given key."""
 
         widget = self.widget_map[key]
 
@@ -254,76 +277,119 @@ class PreferencesDialog(QDialog):
         )
 
     def update_ratio_log_diff_tolerance_value(self, value):
+        """Update ratio log diff tolerance preference."""
 
-        ### convert value to float representing a hundredth of widget's value
+        ### update text on slider
+
+        ## convert value to float representing a hundredth of widget's value
         value /= 100
+
+        ## update slider
 
         key = PreferencesKeys.RATIO_LOG_DIFF_TOLERANCE.value
 
         self.slider_label_map[key].setText(format_ratio_log_diff(value))
 
+        ### if restoring defaults, stop at this point of the method
+
         if self.restoring_defaults:
             return
+
+        ### otherwise, also update the preferences file
 
         PREFERENCES[key] = value
 
         try: save_pyl(PREFERENCES, PREFERENCES_FILEPATH)
+
+        ### while watching out for possible errors
+
         except Exception as err:
             print(f"Failed to save preferences: {err}")
 
     def update_maximum_tolerable_hausdorff_distance_value(self, value):
+        """Update maximum tolerable Hausdorff distance preference."""
+
+        ### update text on slider
 
         key = PreferencesKeys.MAXIMUM_TOLERABLE_HAUSDORFF_DISTANCE.value
         self.slider_label_map[key].setText(str(value))
 
+        ### if restoring defaults, stop at this point of the method
+
         if self.restoring_defaults:
             return
+
+        ### otherwise, also update the preferences file
 
         PREFERENCES[key] = value
 
         try: save_pyl(PREFERENCES, PREFERENCES_FILEPATH)
+
+        ### while watching out for possible errors
+
         except Exception as err:
             print(f"Failed to save preferences: {err}")
 
     def restore_defaults(self):
+        """Restore defaults for all preferences."""
 
+        ### turn flag on
         self.restoring_defaults = True
+
+        ### update values on preferences dictionary and
+        ### respective widgets
 
         for key, value in DEFAULT_PREFERENCES.items():
 
             PREFERENCES[key] = value
             self.widget_setter[key](value)
 
+        ### update the preferences file
         try: save_pyl(PREFERENCES, PREFERENCES_FILEPATH)
+
+        ### while watching out for possible errors
+
         except Exception as err:
             print(f"Failed to save preferences: {err}")
 
+        ### turn flag off
         self.restoring_defaults = False
 
 
 ### helper functions
 
 def validate_preferences(preferences):
+    """Validate given preferences."""
+
+    ### ensure every value in the given preferences dictionary
+    ### has the same type of the value in the respective key in
+    ### the default preferences dictionary
 
     for key, default_value in DEFAULT_PREFERENCES.items():
 
-        value_type = type(default_value)
+        ## get type of default value
+        default_value_type = type(default_value)
 
-        if (
-            key in preferences
-            and value_type != type(preferences[key])
-        ):
+        ## if corresponding key exists in given preferences,
+        ## the respective value must be of same type as the
+        ## default value, otherwise a type error is raised
 
-            raise TypeError(
-                f"If the '{key!r}' key is present in preferences,"
-                f" it must of {value_type} type"
-            )
+        if key in preferences:
 
-def get_button_like_label(text):
+            actual_value_type = type(preferences[key])
 
-    btn = QPushButton(text)
+            if default_value_type != actual_value_type:
 
-    btn.setStyleSheet("""
+                raise TypeError(
+                    f"If the '{key!r}' key is present in preferences,"
+                    f" it must be of {default_value_type} type, not of"
+                    f" {actual_value_type} type"
+                )
+
+def style_button_like_label(button):
+    """Style given button to look just like a regular label."""
+
+    button.setStyleSheet("""
     QPushButton {
         border: none;
         background: transparent;
@@ -338,9 +404,8 @@ def get_button_like_label(text):
     }
     """)
 
-    return btn
-
 def prepare_preferences():
+    """Setup to prepare/load preferences."""
 
     ### if the preferences file doesn't exist, create it
 

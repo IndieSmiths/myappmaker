@@ -1,3 +1,4 @@
+"""Facility with application-related info."""
 
 ORG_DIR_NAME = "IndieSmiths"
 

@@ -21,20 +21,24 @@ from .mainwindow import MainWindow
 
 
 def main():
+    """Instantiate app, its main window and start app's loop."""
+
+    ### instantiate app and do extra setups
 
     app = QApplication(sys.argv)
     app.setOrganizationName(ORG_DIR_NAME)
     app.setApplicationName(APP_DIR_NAME)
 
+    ### instantiate and show window
+
     window = MainWindow(app)
     window.show()
 
+    ### start app's loop
     app.exec()
 
 
-### when file is run as script...
+### when file is run as script, execute main()
 
 if __name__ == "__main__":
-
-    ### execute main()
     main()
